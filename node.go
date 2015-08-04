@@ -14,7 +14,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"compress/gzip"
 )
 
 // node represents the reverse/forward proxy for goTunneLS
@@ -32,14 +31,13 @@ import (
 // if more certs are found then keys, we use the last key
 // only the x509 certificates are taken in client mode, any private keys are ignored
 type node struct {
-	Name        string         // name for logging
-	Connect     string         // connect address
-	Accept      string         // listen address
-	Mode        string         // tunnel mode
-	X509Paths   []string       // array of paths to pem formatted x509 certs/keys/keypairs
-	Timeout     time.Duration  // timeout for sleep after network error in seconds
-	Compression string
-	copyWG      sync.WaitGroup // waitgroup for the second copy goroutine, to log after it exits
+	Name      string         // name for logging
+	Connect   string         // connect address
+	Accept    string         // listen address
+	Mode      string         // tunnel mode
+	X509Paths []string       // array of paths to pem formatted x509 certs/keys/keypairs
+	Timeout   time.Duration  // timeout for sleep after network error in seconds
+	copyWG    sync.WaitGroup // waitgroup for the copy goroutines, to log after they exit
 }
 
 // extract data from the array of paths to certs/keys/keypairs
@@ -215,27 +213,8 @@ func (n *node) tunnel(c1 net.Conn, c2 net.Conn) {
 		"to", c2.LocalAddr().String(),
 		"to", c2.RemoteAddr().String())
 	n.copyWG.Add(2)
-	switch strings.ToLower(n.Compression) {
-	case "gzip":
-		n.log("using gzip compression")
-		w1 := gzip.NewWriter(c1)
-		r1, err := gzip.NewReader(c1)
-		if err != nil {
-			n.log(err)
-			return
-		}
-		w2 := gzip.NewWriter(c2)
-		r2, err := gzip.NewReader(c2)
-		if err != nil {
-			n.log(err)
-			return
-		}
-		go n.copy(w1, r2)
-		go n.copy(w2, r1)
-	default:
-		go n.copy(c1, c2)
-		go n.copy(c2, c1)
-	}
+	go n.copy(c1, c2)
+	go n.copy(c2, c1)
 	n.copyWG.Wait()
 	n.log("closing tunnel from", c1.RemoteAddr().String(),
 		"to", c1.LocalAddr().String(),
@@ -257,4 +236,4 @@ func (n *node) log(v ...interface{}) {
 	gTLS.log <- append([]interface{}{n.Mode + n.Name}, v...)
 }
 
-//TODO renaming variables, CODE REVIEW, compression
+//TODO renaming variables, CODE REVIEW, syslog and compression

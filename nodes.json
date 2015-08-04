@@ -8,8 +8,7 @@
       "X509Paths": [
         "/usr/local/etc/goTunneLS/keypair.pem"
       ],
-      "Timeout": 10,
-      "Compression": "gzip"
+      "Timeout": 10
     },
     {
       "Name": "nc",
@@ -19,9 +18,8 @@
       "X509Paths": [
         "/usr/local/etc/goTunneLS/keypair.pem"
       ],
-      "Timeout": 10,
-      "Compression": "gzip"
+      "Timeout": 10
     }
   ],
-  "LogFile": "/dev/stdout"
+  "LogFile": "/dev/stderr"
 }
