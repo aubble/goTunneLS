@@ -17,35 +17,39 @@ import (
 )
 
 // node represents the reverse/forward proxy for goTunneLS
-// can be in server (reverse) or client (forward) mode
+// can be in server (reverse proxy) or client (forward proxy) mode
 // server mode listens on the Accept address for tls
 // connections to tunnel to the Connect address with plain tcp
 // client mode listens on the Accept address for plain tcp
 // connections to tunnel to the Connect address with tls
-// x509Paths is an array of paths to pem formatted files containing x509 certs/keys/keypairs
-// the x509 key pairs are taken in server mode, they must be one after another to be paired.
-// so first the cert then its corresponding priv key, or the other way around. any extra private keys are ignored
-// as the array implies you can put multiple files but ensure the order of the certs/keys matches up properly, aka one after another
+// X509Paths is an array of paths to pem formatted files containing x509 certs/keys/keypairs
+// the x509 key pairs are taken in server mode, they must be corresponding to be paired
+// basically the n cert extracted must also be the n key extracted. any extra keys are ignored
+// as the array implies you can put multiple files but ensure that the certs/keys are found in the order you want
+// aka first cert matches up with first key and so on
+// you can have multiple certs for different host names
+// if more certs are found then keys, we use the last key
 // only the x509 certificates are taken in client mode, any private keys are ignored
 type node struct {
-	Name    string         // name for logging
-	Connect string         // connect address
-	Accept  string         // listen address
-	Mode    string         // tunnel mode
-	PEM     []string       // array of paths to pem formatted x509 certs/keys/keypairs
-	Timeout time.Duration  // timeout for sleep after network error in seconds
-	copyWG  sync.WaitGroup // waitgroup for the second copy goroutine, to log after it exits
+	Name      string         // name for logging
+	Connect   string         // connect address
+	Accept    string         // listen address
+	Mode      string         // tunnel mode
+	X509Paths []string       // array of paths to pem formatted x509 certs/keys/keypairs
+	Timeout   time.Duration  // timeout for sleep after network error in seconds
+	Logfile   string         // file to output logs to
+	copyWG    sync.WaitGroup // waitgroup for the second copy goroutine, to log after it exits
 }
 
-// extract data from the paths to certs/keys/keypairs (PEM array)
-// then start the node in server/client mode with this raw data
+// extract data from the array of paths to certs/keys/keypairs
+// then start the node in server/client mode with the data
 func (n *node) run() {
 	defer n.log("exiting")
 	defer nodeWG.Done()
 	var raw []byte
-	n.log("extracting raw data from", n.PEM)
-	if n.PEM != nil {
-		for _, f := range n.PEM {
+	n.log("extracting raw data from", n.X509Paths)
+	if n.X509Paths != nil {
+		for _, f := range n.X509Paths {
 			tmp, err := ioutil.ReadFile(f)
 			if err != nil {
 				n.log(err)
@@ -59,7 +63,6 @@ func (n *node) run() {
 			return
 		}
 	}
-	n.log("extracted raw data from", n.PEM)
 	switch strings.ToLower(n.Mode) {
 	case "server":
 		n.log(n.server(raw))
@@ -68,14 +71,15 @@ func (n *node) run() {
 	}
 }
 
+var gettingInput sync.Mutex // when getting input lock so that other goroutines do not ask for input until unlocked
+
 // run node as server (reverse proxy)
 func (n *node) server(raw []byte) error {
-	n.log("parsing raw data from", n.PEM)
+	n.log("parsing raw data from", n.X509Paths)
 	var (
-		rawCerts    [][]byte
-		rawKeys     [][]byte
-		x509Certs   []tls.Certificate
-		phraseIndex int
+		rawCerts  [][]byte
+		rawKeys   [][]byte
+		x509Pairs []tls.Certificate
 	)
 	for {
 		var block *pem.Block
@@ -85,14 +89,15 @@ func (n *node) server(raw []byte) error {
 		}
 		if strings.Contains(strings.ToLower(block.Type), "private key") {
 			if x509.IsEncryptedPEMBlock(block) {
-				fmt.Printf("passphrase for key #%d type %s: ", phraseIndex, block.Type)
+				gettingInput.Lock()
+				fmt.Printf("%s -/ passphrase for key #%d of type %s: ", n.Mode+n.Name, len(rawKeys)+1, block.Type)
 				passphrase, err := bufio.NewReader(os.Stdin).ReadString('\n')
+				gettingInput.Unlock()
 				passphrase = passphrase[:len(passphrase)-1]
 				key, err := x509.DecryptPEMBlock(block, []byte(passphrase))
 				if err != nil {
 					return err
 				}
-				phraseIndex++
 				block.Bytes = key
 				delete(block.Headers, "Proc-Type")
 				delete(block.Headers, "DEK-Info")
@@ -103,14 +108,17 @@ func (n *node) server(raw []byte) error {
 		}
 	}
 	for i, _ := range rawCerts {
-		tmp, err := tls.X509KeyPair(rawCerts[i], rawKeys[i])
+		j := i
+		if i >= len(rawKeys) {
+			j = len(rawKeys) - 1
+		}
+		x509Pair, err := tls.X509KeyPair(rawCerts[i], rawKeys[j])
 		if err != nil {
 			return err
 		}
-		x509Certs = append(x509Certs, tmp)
+		x509Pairs = append(x509Pairs, x509Pair)
 	}
-	n.log("parsed raw data from", n.PEM)
-	conf := tls.Config{Certificates: x509Certs}
+	conf := tls.Config{Certificates: x509Pairs}
 	conf.BuildNameToCertificate()
 	for {
 		ln, err := tls.Listen("tcp", n.Accept, &conf)
@@ -147,7 +155,7 @@ func (n *node) server(raw []byte) error {
 // run node as client (forward proxy)
 func (n *node) client(raw []byte) {
 	certPool := x509.NewCertPool()
-	n.log("adding", n.PEM, "to pool")
+	n.log("adding", n.X509Paths, "to pool")
 	certPool.AppendCertsFromPEM(raw)
 	for {
 		ln, err := net.Listen("tcp", n.Accept)
@@ -215,11 +223,15 @@ func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 	}
 }
 
+var writingLog sync.Mutex
+
 // log to logfile
 func (n *node) log(v ...interface{}) {
+	writingLog.Lock()
 	v = append([]interface{}{n.Mode + n.Name}, v...)
+	log.New()
 	log.Println(v...)
+	writingLog.Unlock()
 }
 
-//TODO renaming variables, CODE REVIEW, add logging file, match unix programs,
-//TODO easier to configure, compression
+//TODO renaming variables, CODE REVIEW, add logging file, match unix programs, compression

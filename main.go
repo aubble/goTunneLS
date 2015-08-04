@@ -12,8 +12,8 @@ var nodeWG sync.WaitGroup
 
 // creates an array of nodes,
 // which it reads the json file into
-// and then starts up each tunnel
-// then waits until each tunnel exits
+// and then starts up each node
+// then waits until each node exits
 func main() {
 	log.SetPrefix("goTunneLS: ")
 	var nodes []*node
@@ -30,13 +30,13 @@ func main() {
 	nodeWG.Wait()
 }
 
+// read json file from path into nodes
 func parseFile(path string, nodes *[]*node) {
 	log.Println("global reading", path)
 	raw, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("global read", path)
 	log.Println("global parsing", path)
 	err = json.Unmarshal(raw, nodes)
 	if err != nil {
@@ -50,5 +50,4 @@ func parseFile(path string, nodes *[]*node) {
 			n.Connect = ":" + n.Connect
 		}
 	}
-	log.Println("global parsed", path)
 }
