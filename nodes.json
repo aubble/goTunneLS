@@ -1,24 +1,25 @@
-[
-  {
-    "Name": "nc -l",
-    "Mode": "server",
-    "Accept": "5001",
-    "Connect": "5000",
-    "X509Paths": [
-      "/usr/local/etc/goTunneLS/keypair.pem"
-    ],
-    "Timeout": 10,
-    "Logfile": "/usr/local/goTunneLS/logs"
-  },
-  {
-    "Name": "nc",
-    "Mode": "client",
-    "Accept": "5002",
-    "Connect": "5001",
-    "X509Paths": [
-      "/usr/local/etc/goTunneLS/keypair.pem"
-    ],
-    "Timeout": 10,
-    "Logfile": "/usr/local/goTunneLS/logs"
-  }
-]
+{
+  "Nodes": [
+    {
+      "Name": "nc -l",
+      "Mode": "server",
+      "Accept": "5001",
+      "Connect": "5000",
+      "X509Paths": [
+        "/usr/local/etc/goTunneLS/keypair.pem"
+      ],
+      "Timeout": 10
+    },
+    {
+      "Name": "nc",
+      "Mode": "client",
+      "Accept": "5002",
+      "Connect": "5001",
+      "X509Paths": [
+        "/usr/local/etc/goTunneLS/keypair.pem"
+      ],
+      "Timeout": 10
+    }
+  ],
+  "LogFile": "/usr/local/etc/goTunneLS/logs"
+}

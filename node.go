@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"strings"
@@ -37,7 +36,6 @@ type node struct {
 	Mode      string         // tunnel mode
 	X509Paths []string       // array of paths to pem formatted x509 certs/keys/keypairs
 	Timeout   time.Duration  // timeout for sleep after network error in seconds
-	Logfile   string         // file to output logs to
 	copyWG    sync.WaitGroup // waitgroup for the second copy goroutine, to log after it exits
 }
 
@@ -90,6 +88,7 @@ func (n *node) server(raw []byte) error {
 		if strings.Contains(strings.ToLower(block.Type), "private key") {
 			if x509.IsEncryptedPEMBlock(block) {
 				gettingInput.Lock()
+				n.log(fmt.Sprintf("getting passphrase for key #%d of type %s", len(rawKeys)+1, block.Type))
 				fmt.Printf("%s -/ passphrase for key #%d of type %s: ", n.Mode+n.Name, len(rawKeys)+1, block.Type)
 				passphrase, err := bufio.NewReader(os.Stdin).ReadString('\n')
 				gettingInput.Unlock()
@@ -223,15 +222,9 @@ func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 	}
 }
 
-var writingLog sync.Mutex
-
 // log to logfile
 func (n *node) log(v ...interface{}) {
-	writingLog.Lock()
-	v = append([]interface{}{n.Mode + n.Name}, v...)
-	log.New()
-	log.Println(v...)
-	writingLog.Unlock()
+	gTLS.log <- append([]interface{}{n.Mode + n.Name}, v...)
 }
 
-//TODO renaming variables, CODE REVIEW, add logging file, match unix programs, compression
+//TODO renaming variables, CODE REVIEW, compression
