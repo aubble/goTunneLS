@@ -60,13 +60,13 @@ func (tun *tunnel) run() {
 	tun.log("extracted raw data from", tun.PEM)
 	switch strings.ToLower(tun.Mode) {
 	case "server":
-		tun.server(raw)
+		tun.log(tun.server(raw))
 	case "client":
 		tun.client(raw)
 	}
 }
 
-func (tun *tunnel) server(raw []byte) {
+func (tun *tunnel) server(raw []byte) error {
 	tun.log("parsing raw data from", tun.PEM)
 	var (
 		rawCerts    [][]byte
@@ -82,15 +82,14 @@ func (tun *tunnel) server(raw []byte) {
 		}
 		if strings.Contains(strings.ToLower(block.Type), "private key") {
 			if x509.IsEncryptedPEMBlock(block) {
-				fmt.Printf("please enter the passphrase for key #%d type %s: ", phraseIndex, block.Type )
+				fmt.Printf("please enter the passphrase for key #%d type %s: ", phraseIndex, block.Type)
 				passphrase, err := bufio.NewReader(os.Stdin).ReadString('\n')
 				passphrase = passphrase[:len(passphrase)-1]
 				key, err := x509.DecryptPEMBlock(block, []byte(passphrase))
-				phraseIndex++
 				if err != nil {
-					tun.log(err)
-					return
+					return err
 				}
+				phraseIndex++
 				block = &pem.Block{Type: block.Type, Bytes: key}
 			}
 			rawKeys = append(rawKeys, pem.EncodeToMemory(block))
@@ -101,8 +100,7 @@ func (tun *tunnel) server(raw []byte) {
 	for i, _ := range rawCerts {
 		tmp, err := tls.X509KeyPair(rawCerts[i], rawKeys[i])
 		if err != nil {
-			tun.log(err)
-			return
+			return err
 		}
 		x509Certs = append(x509Certs, tmp)
 	}
@@ -124,7 +122,8 @@ func (tun *tunnel) server(raw []byte) {
 				tun.log(err)
 				tun.log("sleeping for", int64(tun.Timeout))
 				time.Sleep(time.Second * tun.Timeout)
-				continue
+				ln.Close()
+				break // todo how to handle this
 			}
 			tun.log("connection from", TLS.RemoteAddr().String())
 			go func() {
@@ -134,18 +133,7 @@ func (tun *tunnel) server(raw []byte) {
 					tun.log(err)
 					return
 				}
-				tun.log("beginning tunnel from", TLS.RemoteAddr().String(),
-					"to", TLS.LocalAddr().String(),
-					"to", c.LocalAddr().String(),
-					"to", c.RemoteAddr().String())
-				tun.copyWG.Add(2)
-				go tun.copy(TLS, c)
-				go tun.copy(c, TLS)
-				tun.copyWG.Wait()
-				tun.log("closing tunnel from", TLS.RemoteAddr().String(),
-					"to", TLS.LocalAddr().String(),
-					"to", c.LocalAddr().String(),
-					"to", c.RemoteAddr().String())
+				tun.tunnel(TLS, c)
 			}()
 		}
 	}
@@ -169,8 +157,8 @@ func (tun *tunnel) client(raw []byte) {
 			if err != nil {
 				tun.log(err)
 				tun.log("sleeping for", int64(tun.Timeout))
-				ln.Close()
 				time.Sleep(time.Second * tun.Timeout)
+				ln.Close()
 				break
 			}
 			tun.log("connection from", c.RemoteAddr().String())
@@ -178,7 +166,6 @@ func (tun *tunnel) client(raw []byte) {
 				host, _, err := net.SplitHostPort(tun.Connect)
 				if err != nil {
 					tun.log(err)
-					tun.log("disconnecting from", c.RemoteAddr().String())
 					return
 				}
 				if host == "" {
@@ -188,24 +175,27 @@ func (tun *tunnel) client(raw []byte) {
 				TLS, err := tls.Dial("tcp", tun.Connect, &tls.Config{ServerName: host, RootCAs: certPool})
 				if err != nil {
 					tun.log(err)
-					tun.log("disconnecting from", tun.Connect)
 					return
 				}
-				tun.log("beginning tunnel from", c.RemoteAddr().String(),
-					"to", c.LocalAddr().String(),
-					"to", TLS.LocalAddr().String(),
-					"to", TLS.RemoteAddr().String())
-				tun.copyWG.Add(2)
-				go tun.copy(TLS, c)
-				go tun.copy(c, TLS)
-				tun.copyWG.Wait()
-				tun.log("closing tunnel from", c.RemoteAddr().String(),
-					"to", c.LocalAddr().String(),
-					"to", TLS.LocalAddr().String(),
-					"to", TLS.RemoteAddr().String())
+				tun.tunnel(c, TLS)
 			}()
 		}
 	}
+}
+
+func (tun *tunnel) tunnel(c1 net.Conn, c2 net.Conn) {
+	tun.log("beginning tunnel from", c1.RemoteAddr().String(),
+		"to", c1.LocalAddr().String(),
+		"to", c2.LocalAddr().String(),
+		"to", c2.RemoteAddr().String())
+	tun.copyWG.Add(2)
+	go tun.copy(c1, c2)
+	go tun.copy(c2, c1)
+	tun.copyWG.Wait()
+	tun.log("closing tunnel from", c1.RemoteAddr().String(),
+		"to", c1.LocalAddr().String(),
+		"to", c2.LocalAddr().String(),
+		"to", c2.RemoteAddr().String())
 }
 
 func (tun *tunnel) copy(dst io.WriteCloser, src io.Reader) {
@@ -218,9 +208,9 @@ func (tun *tunnel) copy(dst io.WriteCloser, src io.Reader) {
 }
 
 func (tun *tunnel) log(v ...interface{}) {
-	v = append([]interface{}{tun.Mode + tun.Name + " /-"}, v...)
+	v = append([]interface{}{tun.Mode + tun.Name}, v...)
 	log.Println(v...)
 }
 
 //TODO renaming variables, check errors for return or no exit or what, CODE REVIEW, for exit errors just return error and print in run method
-//TODO add logging file, match unix programs, how to handle passphrases ssh-agent
+//TODO add logging file, match unix programs, how to handle passphrases ssh-agent, easier to configure, passphrases as files, if file no work ask

@@ -50,6 +50,5 @@ func parseFile(path string, tuns *[]*tunnel) {
 			tun.Connect = ":" + tun.Connect
 		}
 	}
-	//todo easier to configure
 	log.Println("global parsed", path)
 }
