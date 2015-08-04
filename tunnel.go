@@ -123,7 +123,7 @@ func (tun *tunnel) server(raw []byte) error {
 				tun.log("sleeping for", int64(tun.Timeout))
 				time.Sleep(time.Second * tun.Timeout)
 				ln.Close()
-				break // todo how to handle this
+				break
 			}
 			tun.log("connection from", TLS.RemoteAddr().String())
 			go func() {
@@ -212,5 +212,5 @@ func (tun *tunnel) log(v ...interface{}) {
 	log.Println(v...)
 }
 
-//TODO renaming variables, check errors for return or no exit or what, CODE REVIEW, for exit errors just return error and print in run method
-//TODO add logging file, match unix programs, how to handle passphrases ssh-agent, easier to configure, passphrases as files, if file no work ask
+//TODO renaming variables, CODE REVIEW, add logging file, match unix programs,
+//TODO how to handle passphrases ssh-agent, easier to configure, passphrases as files, if file no work ask
