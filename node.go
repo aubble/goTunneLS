@@ -98,7 +98,7 @@ func (n *node) server(raw []byte) error {
 						n.log(err)
 					}
 				}
-				stty([]string{"-echo","echonl"})
+				stty([]string{"-echo", "echonl"})
 				passphrase, err := bufio.NewReader(os.Stdin).ReadString('\n')
 				stty([]string{"echo", "-echonl"})
 				gettingInput.Unlock()
@@ -206,7 +206,7 @@ func (n *node) client(raw []byte) {
 	}
 }
 
-// create a tunnel from c1 to c2
+// create a bidirectional tunnel from c1 to c2
 func (n *node) tunnel(c1 net.Conn, c2 net.Conn) {
 	n.log("beginning tunnel from", c1.RemoteAddr().String(),
 		"to", c1.LocalAddr().String(),
@@ -226,15 +226,14 @@ func (n *node) tunnel(c1 net.Conn, c2 net.Conn) {
 func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 	defer dst.Close()
 	defer n.copyWG.Done()
-	_, err := io.Copy(dst, src)
-	if err != nil {
+	if _, err := io.Copy(dst, src); err != nil {
 		n.log(err)
 	}
 }
 
-// log to logfile
+// append node info to arguments and send to logging channel
 func (n *node) log(v ...interface{}) {
 	gTLS.log <- append([]interface{}{n.Mode + n.Name}, v...)
 }
 
-//TODO renaming variables, CODE REVIEW, compression, look over logging interfaces
+//TODO renaming variables, CODE REVIEW, compression

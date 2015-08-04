@@ -19,8 +19,7 @@ func (gTLS *goTunneLS) parseFile(path string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = json.Unmarshal(raw, gTLS)
-	if err != nil {
+	if err = json.Unmarshal(raw, gTLS); err != nil {
 		log.Fatal(err)
 	}
 }

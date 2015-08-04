@@ -1,8 +1,8 @@
 package main
 
 import (
-	"sync"
 	"strings"
+	"sync"
 )
 
 var nodeWG sync.WaitGroup
