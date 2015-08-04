@@ -25,7 +25,7 @@ func (gTLS *goTunneLS) parseFile(path string) {
 	}
 }
 
-// listen on goTunneLS.log and print with logger
+// listen on goTunneLS.log and append whatever is received to logfile
 func (gTLS *goTunneLS) logLoop() {
 	if gTLS.LogFile != "" {
 		logFile, err := os.OpenFile(gTLS.LogFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)

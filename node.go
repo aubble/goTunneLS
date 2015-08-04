@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"os/exec"
+	"log"
 )
 
 // node represents the reverse/forward proxy for goTunneLS
@@ -88,6 +90,11 @@ func (n *node) server(raw []byte) error {
 		if strings.Contains(strings.ToLower(block.Type), "private key") {
 			if x509.IsEncryptedPEMBlock(block) {
 				gettingInput.Lock()
+				noEchoTTY := exec.Command("stty", "-echo")
+				err := noEchoTTY.Run()
+				if err != nil {
+					log.Println(err)
+				}
 				n.log(fmt.Sprintf("getting passphrase for key #%d of type %s", len(rawKeys)+1, block.Type))
 				fmt.Printf("%s -/ passphrase for key #%d of type %s: ", n.Mode+n.Name, len(rawKeys)+1, block.Type)
 				passphrase, err := bufio.NewReader(os.Stdin).ReadString('\n')
