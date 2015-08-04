@@ -8,9 +8,9 @@ import (
 )
 
 type goTunneLS struct {
-	Nodes   []*node
-	LogFile string
-	log     chan []interface{}
+	Nodes   []*node            // slice of nodes to run/configure
+	LogFile string             // path to logfile, use /dev/stdout for standard output and /dev/stderr for standard error
+	log     chan []interface{} // log channel
 }
 
 // read json file from path into goTunneLS
@@ -24,7 +24,7 @@ func (gTLS *goTunneLS) parseFile(path string) {
 	}
 }
 
-// listen on goTunneLS.log and append whatever is received to logfile
+// receive on log channel and append received to logfile
 func (gTLS *goTunneLS) logLoop() {
 	if gTLS.LogFile != "" {
 		logFile, err := os.OpenFile(gTLS.LogFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
