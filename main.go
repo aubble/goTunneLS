@@ -8,29 +8,29 @@ import (
 	"sync"
 )
 
-var tunnelWG sync.WaitGroup
+var nodeWG sync.WaitGroup
 
-// creates an array of tunnels,
+// creates an array of nodes,
 // which it reads the json file into
 // and then starts up each tunnel
 // then waits until each tunnel exits
 func main() {
 	log.SetPrefix("goTunneLS: ")
-	var tuns []*tunnel
-	parseFile("tunnels.json", &tuns)
-	tunnelWG.Add(len(tuns))
+	var nodes []*node
+	parseFile("nodes.json", &nodes)
+	nodeWG.Add(len(nodes))
 	// start each tunnel
-	for _, tun := range tuns {
-		if tun.Name != "" {
-			tun.Name = " " + tun.Name
+	for _, n := range nodes {
+		if n.Name != "" {
+			n.Name = " " + n.Name
 		}
-		tun.log("starting up")
-		go tun.run()
+		n.log("starting up")
+		go n.run()
 	}
-	tunnelWG.Wait()
+	nodeWG.Wait()
 }
 
-func parseFile(path string, tuns *[]*tunnel) {
+func parseFile(path string, nodes *[]*node) {
 	log.Println("global reading", path)
 	raw, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -38,16 +38,16 @@ func parseFile(path string, tuns *[]*tunnel) {
 	}
 	log.Println("global read", path)
 	log.Println("global parsing", path)
-	err = json.Unmarshal(raw, tuns)
+	err = json.Unmarshal(raw, nodes)
 	if err != nil {
 		log.Fatal(err)
 	}
-	for _, tun := range *tuns {
-		if !strings.Contains(tun.Accept, ":") {
-			tun.Accept = ":" + tun.Accept
+	for _, n := range *nodes {
+		if !strings.Contains(n.Accept, ":") {
+			n.Accept = ":" + n.Accept
 		}
-		if !strings.Contains(tun.Connect, ":") {
-			tun.Connect = ":" + tun.Connect
+		if !strings.Contains(n.Connect, ":") {
+			n.Connect = ":" + n.Connect
 		}
 	}
 	log.Println("global parsed", path)

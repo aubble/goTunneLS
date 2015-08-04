@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-// tunnel represents a goTunneLS tunnel
+// node represents the reverse proxy for goTunneLS
 // can be in server or client mode
 // server mode listens on the Accept address for tls
 // connections to tunnel to the Connect address with plain tcp
@@ -27,7 +27,7 @@ import (
 // so first the cert then its corresponding priv key, or the other way around. any extra private keys are ignored
 // as the array implies you can put multiple files but ensure the order of the certs/keys matches up properly, aka one after another
 // only the x509 certificates are taken in client mode, any private keys are ignored
-type tunnel struct {
+type node struct {
 	Name    string         // name for logging
 	Connect string         // connect address
 	Accept  string         // listen address
@@ -37,37 +37,37 @@ type tunnel struct {
 	copyWG  sync.WaitGroup // waitgroup for the second copy goroutine, to log after it exits
 }
 
-func (tun *tunnel) run() {
-	defer tun.log("exiting")
-	defer tunnelWG.Done()
+func (n *node) run() {
+	defer n.log("exiting")
+	defer nodeWG.Done()
 	var raw []byte
-	tun.log("extracting raw data from", tun.PEM)
-	if tun.PEM != nil {
-		for _, f := range tun.PEM {
+	n.log("extracting raw data from", n.PEM)
+	if n.PEM != nil {
+		for _, f := range n.PEM {
 			tmp, err := ioutil.ReadFile(f)
 			if err != nil {
-				tun.log(err)
+				n.log(err)
 				return
 			}
 			raw = append(raw, tmp...)
 		}
 	} else {
-		tun.log("no paths")
-		if strings.ToLower(tun.Mode) == "server" {
+		n.log("no paths")
+		if strings.ToLower(n.Mode) == "server" {
 			return
 		}
 	}
-	tun.log("extracted raw data from", tun.PEM)
-	switch strings.ToLower(tun.Mode) {
+	n.log("extracted raw data from", n.PEM)
+	switch strings.ToLower(n.Mode) {
 	case "server":
-		tun.log(tun.server(raw))
+		n.log(n.server(raw))
 	case "client":
-		tun.client(raw)
+		n.client(raw)
 	}
 }
 
-func (tun *tunnel) server(raw []byte) error {
-	tun.log("parsing raw data from", tun.PEM)
+func (n *node) server(raw []byte) error {
+	n.log("parsing raw data from", n.PEM)
 	var (
 		rawCerts    [][]byte
 		rawKeys     [][]byte
@@ -104,111 +104,111 @@ func (tun *tunnel) server(raw []byte) error {
 		}
 		x509Certs = append(x509Certs, tmp)
 	}
-	tun.log("parsed raw data from", tun.PEM)
+	n.log("parsed raw data from", n.PEM)
 	conf := tls.Config{Certificates: x509Certs}
 	conf.BuildNameToCertificate()
 	for {
-		ln, err := tls.Listen("tcp", tun.Accept, &conf)
+		ln, err := tls.Listen("tcp", n.Accept, &conf)
 		if err != nil {
-			tun.log(err)
-			tun.log("sleeping for", int64(tun.Timeout))
-			time.Sleep(time.Second * tun.Timeout)
+			n.log(err)
+			n.log("sleeping for", int64(n.Timeout))
+			time.Sleep(time.Second * n.Timeout)
 			continue
 		}
-		tun.log("listening on", tun.Accept)
+		n.log("listening on", n.Accept)
 		for {
 			TLS, err := ln.Accept()
 			if err != nil {
-				tun.log(err)
-				tun.log("sleeping for", int64(tun.Timeout))
-				time.Sleep(time.Second * tun.Timeout)
+				n.log(err)
+				n.log("sleeping for", int64(n.Timeout))
+				time.Sleep(time.Second * n.Timeout)
 				ln.Close()
 				break
 			}
-			tun.log("connection from", TLS.RemoteAddr().String())
+			n.log("connection from", TLS.RemoteAddr().String())
 			go func() {
-				tun.log("connecting to", tun.Connect)
-				c, err := net.Dial("tcp", tun.Connect)
+				n.log("connecting to", n.Connect)
+				c, err := net.Dial("tcp", n.Connect)
 				if err != nil {
-					tun.log(err)
+					n.log(err)
 					return
 				}
-				tun.tunnel(TLS, c)
+				n.tunnel(TLS, c)
 			}()
 		}
 	}
 }
 
-func (tun *tunnel) client(raw []byte) {
+func (n *node) client(raw []byte) {
 	certPool := x509.NewCertPool()
-	tun.log("adding", tun.PEM, "to pool")
+	n.log("adding", n.PEM, "to pool")
 	certPool.AppendCertsFromPEM(raw)
 	for {
-		ln, err := net.Listen("tcp", tun.Accept)
+		ln, err := net.Listen("tcp", n.Accept)
 		if err != nil {
-			tun.log(err)
-			tun.log("sleeping for", int64(tun.Timeout))
-			time.Sleep(time.Second * tun.Timeout)
+			n.log(err)
+			n.log("sleeping for", int64(n.Timeout))
+			time.Sleep(time.Second * n.Timeout)
 			continue
 		}
-		tun.log("listening on", tun.Accept)
+		n.log("listening on", n.Accept)
 		for {
 			c, err := ln.Accept()
 			if err != nil {
-				tun.log(err)
-				tun.log("sleeping for", int64(tun.Timeout))
-				time.Sleep(time.Second * tun.Timeout)
+				n.log(err)
+				n.log("sleeping for", int64(n.Timeout))
+				time.Sleep(time.Second * n.Timeout)
 				ln.Close()
 				break
 			}
-			tun.log("connection from", c.RemoteAddr().String())
+			n.log("connection from", c.RemoteAddr().String())
 			go func() {
-				host, _, err := net.SplitHostPort(tun.Connect)
+				host, _, err := net.SplitHostPort(n.Connect)
 				if err != nil {
-					tun.log(err)
+					n.log(err)
 					return
 				}
 				if host == "" {
 					host = "localhost"
 				}
-				tun.log("connecting to", tun.Connect)
-				TLS, err := tls.Dial("tcp", tun.Connect, &tls.Config{ServerName: host, RootCAs: certPool})
+				n.log("connecting to", n.Connect)
+				TLS, err := tls.Dial("tcp", n.Connect, &tls.Config{ServerName: host, RootCAs: certPool})
 				if err != nil {
-					tun.log(err)
+					n.log(err)
 					return
 				}
-				tun.tunnel(c, TLS)
+				n.tunnel(c, TLS)
 			}()
 		}
 	}
 }
 
-func (tun *tunnel) tunnel(c1 net.Conn, c2 net.Conn) {
-	tun.log("beginning tunnel from", c1.RemoteAddr().String(),
+func (n *node) tunnel(c1 net.Conn, c2 net.Conn) {
+	n.log("beginning tunnel from", c1.RemoteAddr().String(),
 		"to", c1.LocalAddr().String(),
 		"to", c2.LocalAddr().String(),
 		"to", c2.RemoteAddr().String())
-	tun.copyWG.Add(2)
-	go tun.copy(c1, c2)
-	go tun.copy(c2, c1)
-	tun.copyWG.Wait()
-	tun.log("closing tunnel from", c1.RemoteAddr().String(),
+	n.copyWG.Add(2)
+	go n.copy(c1, c2)
+	go n.copy(c2, c1)
+	n.copyWG.Wait()
+	n.log("closing tunnel from", c1.RemoteAddr().String(),
 		"to", c1.LocalAddr().String(),
 		"to", c2.LocalAddr().String(),
 		"to", c2.RemoteAddr().String())
 }
 
-func (tun *tunnel) copy(dst io.WriteCloser, src io.Reader) {
+func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 	defer dst.Close()
-	defer tun.copyWG.Done()
+	defer n.copyWG.Done()
 	_, err := io.Copy(dst, src)
 	if err != nil {
-		tun.log(err)
+		n.log(err)
 	}
 }
 
-func (tun *tunnel) log(v ...interface{}) {
-	v = append([]interface{}{tun.Mode + tun.Name}, v...)
+func (n *node) log(v ...interface{}) {
+	v = append([]interface{}{n.Mode + n.Name}, v...)
 	log.Println(v...)
 }
 
