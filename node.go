@@ -14,7 +14,6 @@ import (
 	"sync"
 	"time"
 	"os/exec"
-	"log"
 )
 
 // node represents the reverse/forward proxy for goTunneLS
@@ -90,14 +89,18 @@ func (n *node) server(raw []byte) error {
 		if strings.Contains(strings.ToLower(block.Type), "private key") {
 			if x509.IsEncryptedPEMBlock(block) {
 				gettingInput.Lock()
-				noEchoTTY := exec.Command("stty", "-echo")
-				err := noEchoTTY.Run()
-				if err != nil {
-					log.Println(err)
-				}
 				n.log(fmt.Sprintf("getting passphrase for key #%d of type %s", len(rawKeys)+1, block.Type))
 				fmt.Printf("%s -/ passphrase for key #%d of type %s: ", n.Mode+n.Name, len(rawKeys)+1, block.Type)
+				stty := func(args []string) {
+					stty := exec.Command("stty", args...)
+					stty.Stdin = os.Stdin
+					if err := stty.Run(); err != nil {
+						n.log(err)
+					}
+				}
+				stty([]string{"-echo","echonl"})
 				passphrase, err := bufio.NewReader(os.Stdin).ReadString('\n')
+				stty([]string{"echo", "-echonl"})
 				gettingInput.Unlock()
 				passphrase = passphrase[:len(passphrase)-1]
 				key, err := x509.DecryptPEMBlock(block, []byte(passphrase))
@@ -234,4 +237,4 @@ func (n *node) log(v ...interface{}) {
 	gTLS.log <- append([]interface{}{n.Mode + n.Name}, v...)
 }
 
-//TODO renaming variables, CODE REVIEW, compression
+//TODO renaming variables, CODE REVIEW, compression, look over logging interfaces
