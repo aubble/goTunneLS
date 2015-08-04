@@ -16,8 +16,8 @@ import (
 	"time"
 )
 
-// node represents the reverse proxy for goTunneLS
-// can be in server or client mode
+// node represents the reverse/forward proxy for goTunneLS
+// can be in server (reverse) or client (forward) mode
 // server mode listens on the Accept address for tls
 // connections to tunnel to the Connect address with plain tcp
 // client mode listens on the Accept address for plain tcp
@@ -37,6 +37,8 @@ type node struct {
 	copyWG  sync.WaitGroup // waitgroup for the second copy goroutine, to log after it exits
 }
 
+// extract data from the paths to certs/keys/keypairs (PEM array)
+// then start the node in server/client mode with this raw data
 func (n *node) run() {
 	defer n.log("exiting")
 	defer nodeWG.Done()
@@ -66,13 +68,14 @@ func (n *node) run() {
 	}
 }
 
+// run node as server (reverse proxy)
 func (n *node) server(raw []byte) error {
 	n.log("parsing raw data from", n.PEM)
 	var (
 		rawCerts    [][]byte
 		rawKeys     [][]byte
 		x509Certs   []tls.Certificate
-		phraseIndex int // index for the passphrase from array
+		phraseIndex int
 	)
 	for {
 		var block *pem.Block
@@ -82,7 +85,7 @@ func (n *node) server(raw []byte) error {
 		}
 		if strings.Contains(strings.ToLower(block.Type), "private key") {
 			if x509.IsEncryptedPEMBlock(block) {
-				fmt.Printf("please enter the passphrase for key #%d type %s: ", phraseIndex, block.Type)
+				fmt.Printf("passphrase for key #%d type %s: ", phraseIndex, block.Type)
 				passphrase, err := bufio.NewReader(os.Stdin).ReadString('\n')
 				passphrase = passphrase[:len(passphrase)-1]
 				key, err := x509.DecryptPEMBlock(block, []byte(passphrase))
@@ -90,7 +93,9 @@ func (n *node) server(raw []byte) error {
 					return err
 				}
 				phraseIndex++
-				block = &pem.Block{Type: block.Type, Bytes: key}
+				block.Bytes = key
+				delete(block.Headers, "Proc-Type")
+				delete(block.Headers, "DEK-Info")
 			}
 			rawKeys = append(rawKeys, pem.EncodeToMemory(block))
 		} else if strings.Contains(strings.ToLower(block.Type), "certificate") {
@@ -139,6 +144,7 @@ func (n *node) server(raw []byte) error {
 	}
 }
 
+// run node as client (forward proxy)
 func (n *node) client(raw []byte) {
 	certPool := x509.NewCertPool()
 	n.log("adding", n.PEM, "to pool")
@@ -183,6 +189,7 @@ func (n *node) client(raw []byte) {
 	}
 }
 
+// create a tunnel from c1 to c2
 func (n *node) tunnel(c1 net.Conn, c2 net.Conn) {
 	n.log("beginning tunnel from", c1.RemoteAddr().String(),
 		"to", c1.LocalAddr().String(),
@@ -198,6 +205,7 @@ func (n *node) tunnel(c1 net.Conn, c2 net.Conn) {
 		"to", c2.RemoteAddr().String())
 }
 
+// copy all data from src to dst
 func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 	defer dst.Close()
 	defer n.copyWG.Done()
@@ -207,10 +215,11 @@ func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 	}
 }
 
+// log to logfile
 func (n *node) log(v ...interface{}) {
 	v = append([]interface{}{n.Mode + n.Name}, v...)
 	log.Println(v...)
 }
 
 //TODO renaming variables, CODE REVIEW, add logging file, match unix programs,
-//TODO how to handle passphrases ssh-agent, easier to configure, passphrases as files, if file no work ask
+//TODO easier to configure, compression
