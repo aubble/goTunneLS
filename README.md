@@ -26,3 +26,7 @@ in client mode the root certificates.
 Timeout is how long to wait after a network error before trying again.
 
 Feel free to edit the code, its fairly easy and well documented.
+
+to generate a good certificate + private key run and use as a path in the X509Paths array in both the client and server.
+
+sudo openssl req -new -newkey 4096 -sha256 -x509 -days 365 -nodes -out keypair.pem -keyout keypair.pem

@@ -16,7 +16,7 @@ func main() {
 	gTLS = new(goTunneLS)
 	gTLS.log = make(chan []interface{})
 	go gTLS.logLoop()
-	gTLS.parseFile("nodes.json")
+	gTLS.parseFile("/usr/local/etc/goTunneLS/nodes.json")
 	nodeWG.Add(len(gTLS.Nodes))
 	// start each tunnel
 	for _, n := range gTLS.Nodes {

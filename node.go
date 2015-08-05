@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"log"
 )
 
 // node represents the reverse/forward proxy for goTunneLS
@@ -100,6 +101,9 @@ func (n *node) server(raw []byte) error {
 				}
 				stty([]string{"-echo", "echonl"})
 				passphrase, err := bufio.NewReader(os.Stdin).ReadString('\n')
+				if err != nil {
+					return err
+				}
 				stty([]string{"echo", "-echonl"})
 				gettingInput.Unlock()
 				passphrase = passphrase[:len(passphrase)-1]

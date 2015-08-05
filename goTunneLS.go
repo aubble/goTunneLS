@@ -30,7 +30,6 @@ func (gTLS *goTunneLS) logLoop() {
 		logFile, err := os.OpenFile(gTLS.LogFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 		if err != nil {
 			log.Fatal(err)
-			return
 		}
 		defer logFile.Close()
 		logger := log.New(logFile, "goTunneLS: ", 3)
