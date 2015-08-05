@@ -146,7 +146,7 @@ func (n *node) server(raw []byte) error {
 		tls.TLS_RSA_WITH_AES_128_CBC_SHA,
 		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA}
 	//tls.TLS_RSA_WITH_RC4_128_SHA}
-	conf := tls.Config{Certificates: x509Pairs, CipherSuites: cs, MinVersion: tls.VersionTLS10, MaxVersion: tls.VersionTLS12,
+	conf := tls.Config{Certificates: x509Pairs, CipherSuites: cs, MinVersion: tls.VersionTLS11, MaxVersion: tls.VersionTLS12,
 		/*MaxVersion needed because of bug in TLS_FALLBACK_SCSV gonna fixed in go 1.5*/
 		PreferServerCipherSuites: true}
 	conf.BuildNameToCertificate()
