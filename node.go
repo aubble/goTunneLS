@@ -304,4 +304,4 @@ func (n *node) log(v ...interface{}) {
 	gTLS.log <- append([]interface{}{n.Mode + n.Name}, v...)
 }
 
-//TODO renaming variables, CODE REVIEW, syslog and compression
+//TODO renaming variables, CODE REVIEW, syslog and compression, EAT GARLIC
