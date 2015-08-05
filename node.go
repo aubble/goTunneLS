@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -17,8 +16,8 @@ import (
 	"time"
 )
 
-// node represents the reverse/forward proxy for goTunneLS
-// can be in server (reverse proxy) or client (forward proxy) mode
+// node represents the proxy for goTunneLS
+// can be in server or client mode
 // server mode listens on the Accept address for tls
 // connections to tunnel to the Connect address with plain tcp
 // client mode listens on the Accept address for plain tcp
@@ -31,6 +30,7 @@ import (
 // you can have multiple certs for different host names
 // if more certs are found then keys, we use the last key
 // only the x509 certificates are taken in client mode, any private keys are ignored
+// they are used as root CAs
 type node struct {
 	Name      string         // name for logging
 	Connect   string         // connect address
@@ -73,7 +73,7 @@ func (n *node) run() {
 
 var gettingInput sync.Mutex // when getting input lock so that the other node server goroutines do not ask for input until unlocked
 
-// run node as server (reverse proxy)
+// run node as server
 func (n *node) server(raw []byte) error {
 	n.log("parsing raw data from", n.X509Paths)
 	var (
@@ -138,11 +138,14 @@ func (n *node) server(raw []byte) error {
 		tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
 		tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
 		tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
+		//tls.TLS_ECDHE_RSA_WITH_RC4_128_SHA,
 		tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
 		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+		//tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
 		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
 		tls.TLS_RSA_WITH_AES_128_CBC_SHA,
 		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA}
+	//tls.TLS_RSA_WITH_RC4_128_SHA}
 	conf := tls.Config{Certificates: x509Pairs, CipherSuites: cs, MinVersion: tls.VersionTLS10, MaxVersion: tls.VersionTLS12,
 		/*MaxVersion needed because of bug in TLS_FALLBACK_SCSV gonna fixed in go 1.5*/
 		PreferServerCipherSuites: true}
@@ -171,6 +174,7 @@ func (n *node) server(raw []byte) error {
 				c, err := net.Dial("tcp", n.Connect)
 				if err != nil {
 					n.log(err)
+					TLS.Close()
 					return
 				}
 				n.tunnel(TLS, c)
@@ -179,60 +183,12 @@ func (n *node) server(raw []byte) error {
 	}
 }
 
-// run node as client (forward proxy)
+// run node as client
 func (n *node) client(raw []byte) {
 	certPool := x509.NewCertPool()
-	n.log("adding", n.X509Paths, "to pool")
-	certPool.AppendCertsFromPEM(raw)
-	var (
-		rawCerts [][]byte
-		rawKeys  [][]byte
-	)
-	for {
-		var block *pem.Block
-		block, raw = pem.Decode(raw)
-		if block == nil {
-			break
-		}
-		if strings.Contains(strings.ToLower(block.Type), "private key") {
-			if x509.IsEncryptedPEMBlock(block) {
-				gettingInput.Lock()
-				n.log(fmt.Sprintf("getting passphrase for key #%d of type %s", len(rawKeys)+1, block.Type))
-				fmt.Printf("%s -/ passphrase for key #%d of type %s: ", n.Mode+n.Name, len(rawKeys)+1, block.Type)
-				stty := func(args []string) {
-					stty := exec.Command("stty", args...)
-					stty.Stdin = os.Stdin
-					if err := stty.Run(); err != nil {
-						n.log(err)
-					}
-				}
-				stty([]string{"-echo", "echonl"})
-				passphrase, err := bufio.NewReader(os.Stdin).ReadString('\n')
-				if err != nil {
-					n.log(err)
-				}
-				stty([]string{"echo", "-echonl"})
-				gettingInput.Unlock()
-				passphrase = passphrase[:len(passphrase)-1]
-				key, err := x509.DecryptPEMBlock(block, []byte(passphrase))
-				if err != nil {
-					n.log(err)
-				}
-				block.Bytes = key
-				delete(block.Headers, "Proc-Type")
-				delete(block.Headers, "DEK-Info")
-			}
-			rawKeys = append(rawKeys, pem.EncodeToMemory(block))
-		} else if strings.Contains(strings.ToLower(block.Type), "certificate") {
-			cert, err := x509.ParseCertificate(block.Bytes)
-			if err != nil {
-				log.Println(err)
-			}
-			//cert.DNSNames = []string{"www.aubble.com"}
-			log.Println(cert.DNSNames)
-			log.Println(cert.VerifyHostname("www.aubble.com"))
-			rawCerts = append(rawCerts, pem.EncodeToMemory(block))
-		}
+	if n.X509Paths != nil {
+		n.log("adding", n.X509Paths, "to pool")
+		certPool.AppendCertsFromPEM(raw)
 	}
 	for {
 		ln, err := net.Listen("tcp", n.Accept)
@@ -257,6 +213,7 @@ func (n *node) client(raw []byte) {
 				host, _, err := net.SplitHostPort(n.Connect)
 				if err != nil {
 					n.log(err)
+					c.Close()
 					return
 				}
 				if host == "" {
@@ -265,6 +222,7 @@ func (n *node) client(raw []byte) {
 				n.log("connecting to", n.Connect)
 				TLS, err := tls.Dial("tcp", n.Connect, &tls.Config{ServerName: host, RootCAs: certPool})
 				if err != nil {
+					c.Close()
 					n.log(err)
 					return
 				}
