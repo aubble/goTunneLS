@@ -131,7 +131,10 @@ func (n *node) server(raw []byte) error {
 		}
 		x509Pairs = append(x509Pairs, x509Pair)
 	}
-	conf := tls.Config{Certificates: x509Pairs}
+	cs := []uint16{tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA, tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA, tls.TLS_RSA_WITH_AES_128_CBC_SHA, tls.TLS_RSA_WITH_AES_256_CBC_SHA}
+	conf := tls.Config{Certificates: x509Pairs, CipherSuites: cs, MinVersion: tls.VersionTLS10}
 	conf.BuildNameToCertificate()
 	for {
 		ln, err := tls.Listen("tcp", n.Accept, &conf)
@@ -170,6 +173,56 @@ func (n *node) client(raw []byte) {
 	certPool := x509.NewCertPool()
 	n.log("adding", n.X509Paths, "to pool")
 	certPool.AppendCertsFromPEM(raw)
+	var (
+		rawCerts  [][]byte
+		rawKeys   [][]byte
+	)
+	for {
+		var block *pem.Block
+		block, raw = pem.Decode(raw)
+		if block == nil {
+			break
+		}
+		if strings.Contains(strings.ToLower(block.Type), "private key") {
+			if x509.IsEncryptedPEMBlock(block) {
+				gettingInput.Lock()
+				n.log(fmt.Sprintf("getting passphrase for key #%d of type %s", len(rawKeys)+1, block.Type))
+				fmt.Printf("%s -/ passphrase for key #%d of type %s: ", n.Mode+n.Name, len(rawKeys)+1, block.Type)
+				stty := func(args []string) {
+					stty := exec.Command("stty", args...)
+					stty.Stdin = os.Stdin
+					if err := stty.Run(); err != nil {
+						n.log(err)
+					}
+				}
+				stty([]string{"-echo", "echonl"})
+				passphrase, err := bufio.NewReader(os.Stdin).ReadString('\n')
+				if err != nil {
+					n.log(err)
+				}
+				stty([]string{"echo", "-echonl"})
+				gettingInput.Unlock()
+				passphrase = passphrase[:len(passphrase)-1]
+				key, err := x509.DecryptPEMBlock(block, []byte(passphrase))
+				if err != nil {
+					n.log(err)
+				}
+				block.Bytes = key
+				delete(block.Headers, "Proc-Type")
+				delete(block.Headers, "DEK-Info")
+			}
+			rawKeys = append(rawKeys, pem.EncodeToMemory(block))
+		} else if strings.Contains(strings.ToLower(block.Type), "certificate") {
+			cert, err := x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				log.Println(err)
+			}
+			//cert.DNSNames = []string{"www.aubble.com"}
+			log.Println(cert.DNSNames)
+			log.Println(cert.VerifyHostname("www.aubble.com"))
+			rawCerts = append(rawCerts, pem.EncodeToMemory(block))
+		}
+	}
 	for {
 		ln, err := net.Listen("tcp", n.Accept)
 		if err != nil {
