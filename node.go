@@ -135,15 +135,17 @@ func (n *node) server(raw []byte) error {
 		tls.TLS_FALLBACK_SCSV,
 		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-		tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
 		tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
 		tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
 		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
 		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
 		tls.TLS_RSA_WITH_AES_128_CBC_SHA,
 		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA}
-	conf := tls.Config{Certificates: x509Pairs, CipherSuites: cs, MinVersion: tls.VersionTLS10, PreferServerCipherSuites: true}
+	conf := tls.Config{Certificates: x509Pairs, CipherSuites: cs, MinVersion: tls.VersionTLS10, MaxVersion: tls.VersionTLS12,
+		/*max version needed because of bug in TLS_FALLBACK_SCSV gonna fixed in go 1.5*/
+		PreferServerCipherSuites: true}
 	conf.BuildNameToCertificate()
 	for {
 		ln, err := tls.Listen("tcp", n.Accept, &conf)
