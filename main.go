@@ -8,21 +8,21 @@ import (
 var nodeWG sync.WaitGroup
 var gTLS *goTunneLS
 
-// creates an array of nodes,
-// which it reads the json file into
-// and then starts up each node after setting the logger and name
-// then waits until each node exits
+// read nodes.json file into the global variable gTLS
+// then begin logging on gTLS.log channel
+// then start each node and wait until they all exit
 func main() {
 	gTLS = new(goTunneLS)
 	gTLS.log = make(chan []interface{})
-	go gTLS.logLoop()
-	gTLS.parseFile("/usr/local/etc/goTunneLS/nodes.json")
+	gTLS.parseFile("/etc/goTunneLS/nodes.json")
+	go gTLS.listenLogs()
 	nodeWG.Add(len(gTLS.Nodes))
-	// start each tunnel
 	for _, n := range gTLS.Nodes {
+		// prepend space to name in named nodes to separate mode in logging
 		if n.Name != "" {
 			n.Name = " " + n.Name
 		}
+		// you can use 5000 as a port instead of :5000
 		if !strings.Contains(n.Accept, ":") {
 			n.Accept = ":" + n.Accept
 		}

@@ -132,22 +132,18 @@ func (n *node) server(raw []byte) error {
 		x509Pairs = append(x509Pairs, x509Pair)
 	}
 	cs := []uint16{
-		tls.TLS_FALLBACK_SCSV,
 		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-		tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-		tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-		tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
-		//tls.TLS_ECDHE_RSA_WITH_RC4_128_SHA,
-		tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
 		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-		//tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
-		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
 		tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
 		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA}
-	//tls.TLS_RSA_WITH_RC4_128_SHA}
+	//MaxVersion needed because of bug with TLS_FALLBACK_SCSV gonna be fixed in go 1.5
 	conf := tls.Config{Certificates: x509Pairs, CipherSuites: cs, MinVersion: tls.VersionTLS11, MaxVersion: tls.VersionTLS12,
-		/*MaxVersion needed because of bug in TLS_FALLBACK_SCSV gonna fixed in go 1.5*/
 		PreferServerCipherSuites: true}
 	conf.BuildNameToCertificate()
 	for {
@@ -174,6 +170,7 @@ func (n *node) server(raw []byte) error {
 				c, err := net.Dial("tcp", n.Connect)
 				if err != nil {
 					n.log(err)
+					n.log("disconnecting from", TLS.RemoteAddr().String())
 					TLS.Close()
 					return
 				}
@@ -213,6 +210,7 @@ func (n *node) client(raw []byte) {
 				host, _, err := net.SplitHostPort(n.Connect)
 				if err != nil {
 					n.log(err)
+					n.log("disconnecting from", c.RemoteAddr().String())
 					c.Close()
 					return
 				}
@@ -222,8 +220,9 @@ func (n *node) client(raw []byte) {
 				n.log("connecting to", n.Connect)
 				TLS, err := tls.Dial("tcp", n.Connect, &tls.Config{ServerName: host, RootCAs: certPool})
 				if err != nil {
-					c.Close()
 					n.log(err)
+					n.log("disconnecting from", c.RemoteAddr().String())
+					c.Close()
 					return
 				}
 				n.tunnel(c, TLS)
@@ -259,7 +258,7 @@ func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 
 // append node info to arguments and send to logging channel
 func (n *node) log(v ...interface{}) {
-	gTLS.log <- append([]interface{}{n.Mode + n.Name}, v...)
+	gTLS.log <- append([]interface{}{"--> " + n.Mode + n.Name + " -/"}, v...)
 }
 
-//TODO renaming variables, CODE REVIEW, syslog and compression, EAT GARLIC
+//TODO renaming variables, CODE REVIEW, syslog and compression, better logging, platform independent configuration, per node logging

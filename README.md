@@ -27,6 +27,41 @@ Timeout is how long to wait after a network error before trying again.
 
 Feel free to edit the code, its fairly easy and well documented.
 
-to generate a good certificate + private key run and use as a path in the X509Paths array in both the client and server.
+to generate a good certificate + private key run and use keypair.pem as a path in the X509Paths array for server.
+You can add it as a path in the array for the client as well or you can add it to your OS's trusted certs for client.
 
-sudo openssl req -new -newkey 4096 -sha256 -x509 -days 365 -nodes -out keypair.pem -keyout keypair.pem
+sudo openssl req -new -x509 -newkey 4096 -sha256 -nodes -out keypair.pem -keyout keypair.pem
+
+or save following as openssl.cnf
+
+[ req ]
+default_bits           = 4096
+default_keyfile        = keyfile.pem
+default_md             = sha256
+default_keyfile        = keypair.pem
+distinguished_name     = req_distinguished_name
+prompt                 = no
+x509_extensions        = v3_ca
+encrypt_key            = no
+
+[ req_distinguished_name ]
+C                      = CA
+ST                     = Ontario
+L                      = Mississauga
+O                      = aubble
+CN                     = *.aubble.com
+emailAddress           = info@aubble.com
+
+[ v3_ca]
+subjectAltName 		   = @alt_names
+
+[alt_names]
+DNS.1 				   = *.aubble.com
+DNS.2 				   = aubble.com
+
+
+and run command
+sudo openssl req -new -x509 -days 365 -config openssl.cnf -out keypair.pem
+
+
+TODO ECDSA
