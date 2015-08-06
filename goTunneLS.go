@@ -48,4 +48,4 @@ func (gTLS *goTunneLS) listenLogs() {
 	}
 }
 
-// todo logging creation of file when deleted and what not, also log end of methods/actions
+//todo log end of methods/actions

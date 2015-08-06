@@ -64,4 +64,4 @@ and run command
 sudo openssl req -new -x509 -days 365 -config openssl.cnf -out keypair.pem
 
 
-TODO ECDSA
+#TODO ECDSA and algorithm fix certificate
