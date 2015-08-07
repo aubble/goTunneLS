@@ -149,7 +149,7 @@ func (n *node) client() error {
 					host = "localhost"
 				}
 				n.log("connecting to", n.Connect)
-				TLS, err := tls.Dial("tcp", n.Connect, &tls.Config{ServerName: host, RootCAs: certPool, InsecureSkipVerify:true})
+				TLS, err := tls.Dial("tcp", n.Connect, &tls.Config{ServerName: host, RootCAs: certPool})
 				if err != nil {
 					n.log(err)
 					n.log("disconnecting from", c.RemoteAddr().String())
