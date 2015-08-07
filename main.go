@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+	"os"
 	"strings"
 	"sync"
 )
@@ -15,6 +17,10 @@ func main() {
 	gTLS = new(goTunneLS)
 	gTLS.log = make(chan []interface{})
 	gTLS.parseFile("/etc/goTunneLS/nodes.json")
+	err := os.Chdir("/etc/goTunneLS")
+	if err != nil {
+		log.Println(err)
+	}
 	go gTLS.listenLogs()
 	nodeWG.Add(len(gTLS.Nodes))
 	for _, n := range gTLS.Nodes {
