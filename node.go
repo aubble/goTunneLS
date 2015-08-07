@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/base64"
 	"io"
 	"io/ioutil"
 	"net"
@@ -12,6 +11,7 @@ import (
 	"sync"
 	"time"
 	"golang.org/x/crypto/ocsp"
+	"bytes"
 )
 
 // node represents the proxy for goTunneLS
@@ -72,8 +72,7 @@ func (n *node) server() error {
 		if err != nil {
 			return err
 		}
-		b64req := base64.StdEncoding.EncodeToString(req)
-		httpReq, err := http.NewRequest("GET", cert.Leaf.OCSPServer[0]+"/"+b64req, nil)
+		httpReq, err := http.NewRequest("GET", cert.Leaf.OCSPServer[0]+"/", bytes.NewReader(req))
 		httpReq.Header.Add("Content-Language", "application/ocsp-request")
 		httpReq.Header.Add("Accept", "application/ocsp-response")
 		resp, err := http.DefaultClient.Do(httpReq)
