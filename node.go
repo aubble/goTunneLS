@@ -3,12 +3,17 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
+	"encoding/pem"
 	"io"
 	"io/ioutil"
 	"net"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/crypto/ocsp"
 )
 
 // node represents the proxy for goTunneLS
@@ -27,10 +32,10 @@ import (
 // only the x509 certificates are taken in client mode, any private keys are ignored
 // they are used as root CAs
 type node struct {
-	Name    string // name for logging
-	Connect string // connect address
-	Accept  string // listen address
-	Mode    string // tunnel mode
+	Name    string         // name for logging
+	Connect string         // connect address
+	Accept  string         // listen address
+	Mode    string         // tunnel mode
 	Cert    string
 	Key     string
 	Timeout time.Duration  // timeout for sleep after network error in seconds
@@ -56,6 +61,36 @@ func (n *node) server() error {
 	cert, err := tls.LoadX509KeyPair(n.Cert, n.Key)
 	if err != nil {
 		return err
+	}
+	if cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0]); err != nil {
+		return err
+	}
+	if cert.Leaf.OCSPServer != nil {
+		raw, err := ioutil.ReadFile("root.pem")
+		if err != nil {
+			return err
+		}
+		block, _ := pem.Decode(raw)
+		root, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			return err
+		}
+		req, err := ocsp.CreateRequest(cert.Leaf, root, nil)
+		if err != nil {
+			return err
+		}
+		b64req := base64.StdEncoding.EncodeToString(req)
+		httpReq, err := http.NewRequest("GET", cert.Leaf.OCSPServer[0]+"/"+b64req, nil)
+		httpReq.Header.Add("Content-Language", "application/ocsp-request")
+		httpReq.Header.Add("Accept", "application/ocsp-response")
+		resp, err := http.DefaultClient.Do(httpReq)
+		if err != nil {
+			return err
+		}
+		if cert.OCSPStaple, err = ioutil.ReadAll(resp.Body); err != nil {
+			return err
+		}
+		resp.Body.Close()
 	}
 	cs := []uint16{
 		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
