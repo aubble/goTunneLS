@@ -2,13 +2,13 @@ package main
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"io"
+	"io/ioutil"
 	"net"
 	"strings"
 	"sync"
 	"time"
-	"io/ioutil"
-	"crypto/x509"
 )
 
 // node represents the proxy for goTunneLS
@@ -27,10 +27,10 @@ import (
 // only the x509 certificates are taken in client mode, any private keys are ignored
 // they are used as root CAs
 type node struct {
-	Name    string         // name for logging
-	Connect string         // connect address
-	Accept  string         // listen address
-	Mode    string         // tunnel mode
+	Name    string // name for logging
+	Connect string // connect address
+	Accept  string // listen address
+	Mode    string // tunnel mode
 	Cert    string
 	Key     string
 	Timeout time.Duration  // timeout for sleep after network error in seconds
@@ -161,6 +161,7 @@ func (n *node) client() error {
 		}
 	}
 }
+
 // create a bidirectional tunnel from c1 to c2
 func (n *node) tunnel(c1 net.Conn, c2 net.Conn) {
 	n.log("beginning tunnel from", c1.RemoteAddr().String(),
