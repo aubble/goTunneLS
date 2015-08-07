@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
-	"encoding/pem"
 	"io"
 	"io/ioutil"
 	"net"
@@ -12,7 +11,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
 	"golang.org/x/crypto/ocsp"
 )
 
@@ -66,16 +64,11 @@ func (n *node) server() error {
 		return err
 	}
 	if cert.Leaf.OCSPServer != nil {
-		raw, err := ioutil.ReadFile("root.pem")
+		issuer, err := x509.ParseCertificate(cert.Certificate[1])
 		if err != nil {
 			return err
 		}
-		block, _ := pem.Decode(raw)
-		root, err := x509.ParseCertificate(block.Bytes)
-		if err != nil {
-			return err
-		}
-		req, err := ocsp.CreateRequest(cert.Leaf, root, nil)
+		req, err := ocsp.CreateRequest(cert.Leaf, issuer, nil)
 		if err != nil {
 			return err
 		}
