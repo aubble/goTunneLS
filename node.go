@@ -9,7 +9,6 @@ import (
 	"golang.org/x/crypto/ocsp"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"strings"
@@ -75,9 +74,10 @@ func (n *node) server() error {
 	}
 	TLSConfig := new(tls.Config)
 	if cert.Leaf.OCSPServer != nil {
-		n.log("OCSP server found; setting up OCSP")
+		n.log("OCSP servers found", cert.Leaf.OCSPServer)
+		n.log("initalizing OCSP stapling")
 		OCSPC := OCSPCert{n: n, cert: &cert}
-		log.Println("reading issuer cert", n.Issuer)
+		OCSPC.n.log("reading issuer", n.Issuer)
 		issuerRAW, err := ioutil.ReadFile(n.Issuer)
 		if err != nil {
 			return err
@@ -98,17 +98,18 @@ func (n *node) server() error {
 		if OCSPC.issuer == nil {
 			return errors.New("no issuer")
 		}
-		log.Println("creating OCSP request")
+		OCSPC.n.log("creating OCSP request")
 		OCSPC.req, err = ocsp.CreateRequest(OCSPC.cert.Leaf, OCSPC.issuer, nil)
 		if err != nil {
 			return err
 		}
-		log.Println("requesting inital OCSP response")
+		OCSPC.n.log("requesting inital OCSP response")
 		err = OCSPC.updateStaple()
 		if err != nil {
 			return err
 		}
-		go OCSPC.stapleLoop()
+		OCSPC.n.log("starting stapleLoop")
+		go OCSPC.updateStapleLoop()
 		TLSConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 			OCSPC.RLock()
 			defer OCSPC.RUnlock()
@@ -167,11 +168,12 @@ func (OCSPC *OCSPCert) updateStaple() error {
 			return errors.New("could not request OCSP servers")
 		}
 	}
-	OCSPC.n.log("parsing OCSP response")
+	OCSPC.n.log("reading response")
 	OCSPStaple, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
+	OCSPC.n.log("parsing response")
 	OCSPResp, _ := ocsp.ParseResponse(OCSPStaple, OCSPC.issuer)
 	if OCSPResp.NextUpdate != (time.Time{}) {
 		OCSPC.nextUpdate = OCSPResp.NextUpdate
@@ -189,8 +191,7 @@ func (OCSPC *OCSPCert) updateStaple() error {
 	return nil
 }
 
-func (OCSPC *OCSPCert) stapleLoop() {
-	OCSPC.n.log("starting stapleLoop")
+func (OCSPC *OCSPCert) updateStapleLoop() {
 	time.Sleep(OCSPC.nextUpdate.Sub(time.Now()))
 	for {
 		if err := OCSPC.updateStaple(); err == nil {
