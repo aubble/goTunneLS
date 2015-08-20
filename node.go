@@ -66,7 +66,7 @@ func (n *node) run() {
 
 // run node as server
 func (n *node) server() error {
-	n.log("loading cert", n.Cert+" and key", n.Key)
+	n.log("loading cert", n.Cert, "and key", n.Key)
 	cert, err := tls.LoadX509KeyPair(n.Cert, n.Key)
 	if err != nil {
 		return err
@@ -100,16 +100,10 @@ func (n *node) server() error {
 		if OCSPC.issuer == nil {
 			return errors.New("no issuer")
 		}
-		OCSPC.n.log("creating OCSP request")
+		OCSPC.n.log("creating the OCSP request")
 		OCSPC.req, err = ocsp.CreateRequest(OCSPC.cert.Leaf, OCSPC.issuer, nil)
 		if err != nil {
 			return err
-		}
-		OCSPC.n.log("requesting inital OCSP response")
-		if err = OCSPC.updateStaple(); err != nil {
-			n.log(err)
-			n.log("staple loop will try again after", int64(n.Timeout))
-			OCSPC.nextUpdate = time.Now().Add(time.Second * n.Timeout)
 		}
 		OCSPC.n.log("starting stapleLoop")
 		go OCSPC.updateStapleLoop()
@@ -140,7 +134,7 @@ func (n *node) server() error {
 	updateKey := func(key *[32]byte) {
 		if _, err := rand.Read((*key)[:]); err != nil {
 			n.log(err)
-			TLSConfig.SetSessionTicketKeys(nil)
+			panic(errors.New("cannot create new session ticket key"))
 		}
 	}
 	n.log("creating inital session ticket keys")
@@ -148,18 +142,14 @@ func (n *node) server() error {
 	updateKey(&keys[0])
 	updateKey(&keys[1])
 	updateKey(&keys[2])
-	n.log("setting initial session ticket keys")
-	TLSConfig.SetSessionTicketKeys(keys)
-	n.log("initiating session ticket key rotation loop")
 	go func() {
 		for {
-			n.log("session ticket key rotation loop sleeping for", int64(n.TicketRotationInterval))
-			time.Sleep(time.Second * n.TicketRotationInterval)
 			n.log("updating session ticket keys")
+			TLSConfig.SetSessionTicketKeys(keys)
+			time.Sleep(time.Second * n.TicketRotationInterval)
 			keys[0] = keys[1]
 			keys[1] = keys[2]
 			updateKey(&keys[2])
-			TLSConfig.SetSessionTicketKeys(keys)
 		}
 	}()
 	n.listen = func() (net.Listener, error) {
@@ -227,7 +217,6 @@ func (OCSPC *OCSPCert) updateStaple() error {
 }
 
 func (OCSPC *OCSPCert) updateStapleLoop() {
-	time.Sleep(OCSPC.nextUpdate.Sub(time.Now()))
 	for {
 		if err := OCSPC.updateStaple(); err == nil {
 			OCSPC.n.log("stapleLoop: sleeping for", OCSPC.nextUpdate.Sub(time.Now()).Seconds())
@@ -254,7 +243,7 @@ func (n *node) client() error {
 		if err != nil {
 			return err
 		}
-		n.log("adding" + n.Cert + "to pool")
+		n.log("adding", n.Cert, "to pool")
 		certPool.AppendCertsFromPEM(raw)
 	}
 	n.listen = func() (net.Listener, error) {
