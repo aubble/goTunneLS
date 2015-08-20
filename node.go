@@ -24,20 +24,21 @@ import (
 // client mode listens on the Accept address for plain tcp
 // connections to tunnel to the Connect address with tls
 type node struct {
-	Name         string                       // name for logging
-	Mode         string                       // tunnel mode
-	Accept       string                       // listen address
-	Connect      string                       // connect address
-	Cert         string                       // path to cert
-	Key          string                       // path to key
-	Issuer       string                       // issuer for OCSP
-	Timeout      time.Duration                // timeout for sleep after network error in seconds
-	OCSPInterval time.Duration                // interval between OCSP updates when OCSP responder nextupdate is nil, otherwise wait till next update
-	copyWG       sync.WaitGroup               // waitgroup for the copy goroutines, to log in sync after they exit
-	listen       func() (net.Listener, error) // listen on accept function
-	dial         func() (net.Conn, error)     // dial on connect function
-	logInterface chan []interface{}           // logging channel
-	nodeWG       sync.WaitGroup
+	Name                   string        // name for logging
+	Mode                   string        // tunnel mode
+	Accept                 string        // listen address
+	Connect                string        // connect address
+	Cert                   string        // path to cert
+	Key                    string        // path to key
+	Issuer                 string        // issuer for OCSP
+	Timeout                time.Duration // timeout for sleep after network error in seconds
+	OCSPInterval           time.Duration // interval between OCSP updates when OCSP responder nextupdate is nil, otherwise wait till next update
+	TicketRotationInterval time.Duration
+	copyWG                 sync.WaitGroup               // waitgroup for the copy goroutines, to log in sync after they exit
+	listen                 func() (net.Listener, error) // listen on accept function
+	dial                   func() (net.Conn, error)     // dial on connect function
+	logInterface           chan []interface{}           // logging channel
+	nodeWG                 sync.WaitGroup
 }
 
 // extract data from the array of paths to certs/keys/keypairs
@@ -106,7 +107,9 @@ func (n *node) server() error {
 		}
 		OCSPC.n.log("requesting inital OCSP response")
 		if err = OCSPC.updateStaple(); err != nil {
-			return err
+			n.log(err)
+			n.log("staple loop will try again after", int64(n.Timeout))
+			OCSPC.nextUpdate = time.Now().Add(time.Second * n.Timeout)
 		}
 		OCSPC.n.log("starting stapleLoop")
 		go OCSPC.updateStapleLoop()
@@ -115,9 +118,11 @@ func (n *node) server() error {
 			defer OCSPC.RUnlock()
 			return OCSPC.cert, nil
 		}
-	} else {
-		TLSConfig.Certificates = []tls.Certificate{cert}
+		//	} else {
+		//		TLSConfig.Certificates = []tls.Certificate{cert}
+		//TODO FIX THIS BUG
 	}
+	TLSConfig.Certificates = []tls.Certificate{cert}
 	TLSConfig.CipherSuites = []uint16{
 		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
@@ -132,25 +137,29 @@ func (n *node) server() error {
 	TLSConfig.PreferServerCipherSuites = true
 	TLSConfig.MinVersion = tls.VersionTLS11
 	TLSConfig.NextProtos = []string{"http/1.1"}
-	updateKey := func(key [32]byte) {
-		if _, err := rand.Read(key[:]); err != nil {
+	updateKey := func(key *[32]byte) {
+		if _, err := rand.Read((*key)[:]); err != nil {
 			n.log(err)
 			TLSConfig.SetSessionTicketKeys(nil)
 		}
 	}
 	n.log("creating inital session ticket keys")
 	keys := make([][32]byte, 3)
-	updateKey(keys[0])
-	updateKey(keys[1])
-	updateKey(keys[2])
+	updateKey(&keys[0])
+	updateKey(&keys[1])
+	updateKey(&keys[2])
+	n.log("setting initial session ticket keys")
+	TLSConfig.SetSessionTicketKeys(keys)
 	n.log("initiating session ticket key rotation loop")
 	go func() {
 		for {
-			TLSConfig.SetSessionTicketKeys(keys)
-			time.Sleep(time.Hour * 8)
+			n.log("session ticket key rotation loop sleeping for", int64(n.TicketRotationInterval))
+			time.Sleep(time.Second * n.TicketRotationInterval)
+			n.log("updating session ticket keys")
 			keys[0] = keys[1]
 			keys[1] = keys[2]
-			updateKey(keys[2])
+			updateKey(&keys[2])
+			TLSConfig.SetSessionTicketKeys(keys)
 		}
 	}()
 	n.listen = func() (net.Listener, error) {
@@ -186,7 +195,8 @@ func (OCSPC *OCSPCert) updateStaple() error {
 		if err == nil {
 			break
 		}
-		if i == len(OCSPC.cert.Leaf.OCSPServer) {
+		OCSPC.n.log(err)
+		if i+1 == len(OCSPC.cert.Leaf.OCSPServer) {
 			return errors.New("could not request OCSP servers")
 		}
 	}
@@ -220,10 +230,15 @@ func (OCSPC *OCSPCert) updateStapleLoop() {
 	time.Sleep(OCSPC.nextUpdate.Sub(time.Now()))
 	for {
 		if err := OCSPC.updateStaple(); err == nil {
-			OCSPC.n.log("stapleLoop: sleeping till", int64(OCSPC.n.Timeout))
+			OCSPC.n.log("stapleLoop: sleeping for", OCSPC.nextUpdate.Sub(time.Now()).Seconds())
 			time.Sleep(OCSPC.nextUpdate.Sub(time.Now()))
 		} else {
 			OCSPC.n.log(err)
+			if time.Now().After(OCSPC.nextUpdate) {
+				OCSPC.Lock()
+				OCSPC.cert.OCSPStaple = nil
+				OCSPC.Unlock()
+			}
 			OCSPC.n.log("stapleLoop: sleeping for", int64(OCSPC.n.Timeout))
 			time.Sleep(time.Second * OCSPC.n.Timeout)
 		}
