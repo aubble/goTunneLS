@@ -8,8 +8,8 @@ import (
 )
 
 type goTunneLS struct {
-	Nodes   []*node            // slice of nodes to run
-	LogFile string             // path to logfile, use /dev/stdout for standard output and /dev/stderr for standard error
+	Nodes        []*node            // slice of nodes to run
+	LogFile      string             // path to logfile, use /dev/stdout for standard output and /dev/stderr for standard error
 	logInterface chan []interface{} // log channel
 }
 
@@ -47,6 +47,6 @@ func (gTLS *goTunneLS) receiveAndLog() {
 	}
 }
 
-func (gTLS *goTunneLS) log(v ...interface{}){
+func (gTLS *goTunneLS) log(v ...interface{}) {
 	gTLS.logInterface <- append([]interface{}{"--> global -/"}, v...)
 }

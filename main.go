@@ -28,7 +28,7 @@ func main() {
 		}
 		n.logInterface = gTLS.logInterface
 		n.nodeWG = nodeWG
-		gTLS.log("--> starting node", n.Mode + n.Name)
+		gTLS.log("--> starting node", n.Mode+n.Name)
 		go n.run()
 	}
 	gTLS.log("--> started all nodes; now waiting")
