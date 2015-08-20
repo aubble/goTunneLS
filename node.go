@@ -64,7 +64,7 @@ func (n *node) run() {
 
 // run node as server
 func (n *node) server() error {
-	n.log("loading cert", n.Cert, "and key", n.Key)
+	n.log("loading cert " + n.Cert + " and key " + n.Key)
 	cert, err := tls.LoadX509KeyPair(n.Cert, n.Key)
 	if err != nil {
 		return err
@@ -77,7 +77,7 @@ func (n *node) server() error {
 		n.log("OCSP servers found", cert.Leaf.OCSPServer)
 		n.log("initalizing OCSP stapling")
 		OCSPC := OCSPCert{n: n, cert: &cert}
-		OCSPC.n.log("reading issuer", n.Issuer)
+		OCSPC.n.log("reading issuer " + n.Issuer)
 		issuerRAW, err := ioutil.ReadFile(n.Issuer)
 		if err != nil {
 			return err
@@ -214,7 +214,7 @@ func (n *node) client() error {
 		if err != nil {
 			return err
 		}
-		n.log("adding", n.Cert, "to pool")
+		n.log("adding" + n.Cert + "to pool")
 		certPool.AppendCertsFromPEM(raw)
 	}
 	n.listen = func() (net.Listener, error) {
@@ -259,7 +259,7 @@ func (n *node) listenAndServe() {
 			time.Sleep(time.Second * n.Timeout)
 			continue
 		}
-		n.log("listening on", n.Accept)
+		n.log("listening on " + n.Accept)
 		for {
 			c1, err := ln.Accept()
 			if err != nil {
@@ -269,27 +269,23 @@ func (n *node) listenAndServe() {
 				ln.Close()
 				break
 			}
-			n.log("connection from", c1.RemoteAddr().String())
+			n.log("connection from", c1.RemoteAddr())
 			go func() {
-				n.log("connecting to", n.Connect)
+				n.log("connecting to " + n.Connect)
 				c2, err := n.dial()
 				if err != nil {
 					n.log(err)
 					c1.Close()
 					return
 				}
-				n.log("beginning tunnel from", c1.RemoteAddr().String(),
-					"to", c1.LocalAddr().String(),
-					"to", c2.LocalAddr().String(),
-					"to", c2.RemoteAddr().String())
+				n.log("beginning tunnel from", c1.RemoteAddr(), "to", c1.LocalAddr(),
+					"to", c2.LocalAddr(), "to", c2.RemoteAddr())
 				n.copyWG.Add(2)
 				go n.copy(c1, c2)
 				go n.copy(c2, c1)
 				n.copyWG.Wait()
-				n.log("closed tunnel from", c1.RemoteAddr().String(),
-					"to", c1.LocalAddr().String(),
-					"to", c2.LocalAddr().String(),
-					"to", c2.RemoteAddr().String())
+				n.log("closed tunnel from", c1.RemoteAddr(), "to", c1.LocalAddr(),
+					"to", c2.LocalAddr(), "to", c2.RemoteAddr())
 			}()
 		}
 	}
