@@ -66,7 +66,6 @@ func (n *node) run() {
 // run node as server
 func (n *node) server() error {
 	n.log("loading cert", n.Cert, "and key", n.Key)
-	var err error
 	cert, err := tls.LoadX509KeyPair(n.Cert, n.Key)
 	if err != nil {
 		return err
@@ -104,7 +103,7 @@ func (n *node) server() error {
 		if err != nil {
 			return err
 		}
-		log.Println("request inital stapled response")
+		log.Println("requesting inital OCSP response")
 		err = OCSPC.updateStaple()
 		if err != nil {
 			return err
@@ -150,10 +149,14 @@ type OCSPCert struct {
 	n *node
 }
 
-func (OCSPC *OCSPCert) updateStaple() (err error) {
+func (OCSPC *OCSPCert) updateStaple() error {
+	OCSPC.n.log("sending request to OCSP servers", OCSPC.cert.Leaf.OCSPServer)
 	var resp *http.Response
 	for i := 0; i < len(OCSPC.cert.Leaf.OCSPServer); i++ {
 		req, err := http.NewRequest("GET", OCSPC.cert.Leaf.OCSPServer[i]+"/"+base64.StdEncoding.EncodeToString(OCSPC.req), nil)
+		if err != nil {
+			return err
+		}
 		req.Header.Add("Content-Language", "application/ocsp-request")
 		req.Header.Add("Accept", "application/ocsp-response")
 		resp, err = http.DefaultClient.Do(req)
@@ -161,11 +164,12 @@ func (OCSPC *OCSPCert) updateStaple() (err error) {
 			break
 		}
 		if i == len(OCSPC.cert.Leaf.OCSPServer) {
-			break
+			return errors.New("could not request OCSP servers")
 		}
 	}
-	var OCSPStaple []byte
-	if OCSPStaple, err = ioutil.ReadAll(resp.Body); err != nil {
+	OCSPC.n.log("parsing OCSP response")
+	OCSPStaple, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
 		return err
 	}
 	OCSPResp, _ := ocsp.ParseResponse(OCSPStaple, OCSPC.issuer)
@@ -174,28 +178,27 @@ func (OCSPC *OCSPCert) updateStaple() (err error) {
 	} else {
 		OCSPC.nextUpdate = time.Now().Add(time.Second * OCSPC.n.OCSPInterval)
 	}
+	OCSPC.n.log("updating OCSP staple")
 	cert := *OCSPC.cert
 	cert.OCSPStaple = OCSPStaple
 	OCSPC.Lock()
 	OCSPC.cert = &cert
 	OCSPC.Unlock()
 	resp.Body.Close()
-	if err == nil {
-		OCSPC.n.log("successfully fetched OCSP reponse and stapled")
-		OCSPC.n.log("next update at", OCSPC.nextUpdate)
-	}
-	return err
+	OCSPC.n.log("next OCSP update at", OCSPC.nextUpdate)
+	return nil
 }
 
 func (OCSPC *OCSPCert) stapleLoop() {
 	OCSPC.n.log("starting stapleLoop")
 	time.Sleep(OCSPC.nextUpdate.Sub(time.Now()))
 	for {
-		err := OCSPC.updateStaple()
-		if err == nil {
+		if err := OCSPC.updateStaple(); err == nil {
+			OCSPC.n.log("stapleLoop: sleeping till", int64(OCSPC.n.Timeout))
 			time.Sleep(OCSPC.nextUpdate.Sub(time.Now()))
 		} else {
 			OCSPC.n.log(err)
+			OCSPC.n.log("stapleLoop: sleeping for", int64(OCSPC.n.Timeout))
 			time.Sleep(time.Second * OCSPC.n.Timeout)
 		}
 	}
@@ -271,7 +274,6 @@ func (n *node) listenAndServe() {
 				c2, err := n.dial()
 				if err != nil {
 					n.log(err)
-					n.log("disconnecting from", c1.RemoteAddr().String())
 					c1.Close()
 					return
 				}
