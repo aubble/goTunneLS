@@ -132,17 +132,19 @@ func (n *node) server() error {
 	TLSConfig.PreferServerCipherSuites = true
 	TLSConfig.MinVersion = tls.VersionTLS11
 	TLSConfig.NextProtos = []string{"http/1.1"}
-	n.log("beginning session ticket key rotation loop")
-	go func() {
-		keys := make([][32]byte, 3)
-		updateKey := func(key [32]byte) {
-			if _, err := rand.Read(key[:]); err != nil {
-				n.log(err)
-			}
+	updateKey := func(key [32]byte) {
+		if _, err := rand.Read(key[:]); err != nil {
+			n.log(err)
+			TLSConfig.SetSessionTicketKeys(nil)
 		}
-		updateKey(keys[0])
-		updateKey(keys[1])
-		updateKey(keys[2])
+	}
+	n.log("creating inital session ticket keys")
+	keys := make([][32]byte, 3)
+	updateKey(keys[0])
+	updateKey(keys[1])
+	updateKey(keys[2])
+	n.log("initiating session ticket key rotation loop")
+	go func() {
 		for {
 			TLSConfig.SetSessionTicketKeys(keys)
 			time.Sleep(time.Hour * 8)
