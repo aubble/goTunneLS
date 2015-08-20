@@ -9,7 +9,7 @@ import (
 
 type goTunneLS struct {
 	Nodes        []*node            // slice of nodes to run
-	LogFile      string             // path to logfile, use /dev/stdout for standard output and /dev/stderr for standard error
+	Logfile      string             // path to logfile, use /dev/stdout for standard output and /dev/stderr for standard error
 	logInterface chan []interface{} // log channel
 }
 
@@ -28,9 +28,9 @@ func (gTLS *goTunneLS) parseFile(path string) {
 // if logfile doesn't exist, create it, and check continuously
 // if it doesn't exist and if so create
 func (gTLS *goTunneLS) receiveAndLog() {
-	if gTLS.LogFile != "" {
+	if gTLS.Logfile != "" {
 		for {
-			logFile, err := os.OpenFile(gTLS.LogFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+			logFile, err := os.OpenFile(gTLS.Logfile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -38,10 +38,11 @@ func (gTLS *goTunneLS) receiveAndLog() {
 			log.SetOutput(logFile)
 			log.Println("--> global -/ beginning logging")
 			for {
-				log.Println(<-gTLS.logInterface...)
-				if _, err = os.Stat(gTLS.LogFile); os.IsNotExist(err) {
+				if _, err = os.Stat(gTLS.Logfile); os.IsNotExist(err) {
 					break
 				}
+				log.Println(<-gTLS.logInterface...)
+
 			}
 		}
 	}
