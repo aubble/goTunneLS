@@ -130,8 +130,6 @@ func (n *node) server() error {
 		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA}
 	TLSConfig.PreferServerCipherSuites = true
 	TLSConfig.MinVersion = tls.VersionTLS11
-	//MaxVersion needed because of bug with TLS_FALLBACK_SCSV gonna be fixed in go 1.5
-	TLSConfig.MaxVersion = tls.VersionTLS12
 	TLSConfig.NextProtos = []string{"http/1.1"}
 	n.listen = func() (net.Listener, error) {
 		return tls.Listen("tcp", n.Accept, TLSConfig)
@@ -240,8 +238,6 @@ func (n *node) client() error {
 		tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
 		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA}
 	TLSConfig.MinVersion = tls.VersionTLS11
-	//MaxVersion needed because of bug with TLS_FALLBACK_SCSV gonna be fixed in go 1.5
-	TLSConfig.MaxVersion = tls.VersionTLS12
 	TLSConfig.NextProtos = []string{"http/1.1"}
 	n.dial = func() (net.Conn, error) {
 		return tls.Dial("tcp", n.Connect, TLSConfig)
