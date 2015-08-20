@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -64,7 +65,7 @@ func (n *node) run() {
 
 // run node as server
 func (n *node) server() error {
-	n.log("loading cert " + n.Cert + " and key " + n.Key)
+	n.log("loading cert", n.Cert+" and key", n.Key)
 	cert, err := tls.LoadX509KeyPair(n.Cert, n.Key)
 	if err != nil {
 		return err
@@ -77,7 +78,7 @@ func (n *node) server() error {
 		n.log("OCSP servers found", cert.Leaf.OCSPServer)
 		n.log("initalizing OCSP stapling")
 		OCSPC := OCSPCert{n: n, cert: &cert}
-		OCSPC.n.log("reading issuer " + n.Issuer)
+		OCSPC.n.log("reading issuer", n.Issuer)
 		issuerRAW, err := ioutil.ReadFile(n.Issuer)
 		if err != nil {
 			return err
@@ -104,8 +105,7 @@ func (n *node) server() error {
 			return err
 		}
 		OCSPC.n.log("requesting inital OCSP response")
-		err = OCSPC.updateStaple()
-		if err != nil {
+		if err = OCSPC.updateStaple(); err != nil {
 			return err
 		}
 		OCSPC.n.log("starting stapleLoop")
@@ -115,8 +115,9 @@ func (n *node) server() error {
 			defer OCSPC.RUnlock()
 			return OCSPC.cert, nil
 		}
+	} else {
+		TLSConfig.Certificates = []tls.Certificate{cert}
 	}
-	TLSConfig.Certificates = []tls.Certificate{cert}
 	TLSConfig.CipherSuites = []uint16{
 		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
@@ -131,6 +132,25 @@ func (n *node) server() error {
 	TLSConfig.PreferServerCipherSuites = true
 	TLSConfig.MinVersion = tls.VersionTLS11
 	TLSConfig.NextProtos = []string{"http/1.1"}
+	n.log("beginning session ticket key rotation loop")
+	go func() {
+		keys := make([][32]byte, 3)
+		updateKey := func(key [32]byte) {
+			if _, err := rand.Read(key[:]); err != nil {
+				n.log(err)
+			}
+		}
+		updateKey(keys[0])
+		updateKey(keys[1])
+		updateKey(keys[2])
+		for {
+			TLSConfig.SetSessionTicketKeys(keys)
+			time.Sleep(time.Hour * 8)
+			keys[0] = keys[1]
+			keys[1] = keys[2]
+			updateKey(keys[2])
+		}
+	}()
 	n.listen = func() (net.Listener, error) {
 		return tls.Listen("tcp", n.Accept, TLSConfig)
 	}
@@ -174,7 +194,10 @@ func (OCSPC *OCSPCert) updateStaple() error {
 		return err
 	}
 	OCSPC.n.log("parsing response")
-	OCSPResp, _ := ocsp.ParseResponse(OCSPStaple, OCSPC.issuer)
+	OCSPResp, err := ocsp.ParseResponse(OCSPStaple, OCSPC.issuer)
+	if err != nil {
+		return err
+	}
 	if OCSPResp.NextUpdate != (time.Time{}) {
 		OCSPC.nextUpdate = OCSPResp.NextUpdate
 	} else {
@@ -259,7 +282,7 @@ func (n *node) listenAndServe() {
 			time.Sleep(time.Second * n.Timeout)
 			continue
 		}
-		n.log("listening on " + n.Accept)
+		n.log("listening on", n.Accept)
 		for {
 			c1, err := ln.Accept()
 			if err != nil {
@@ -271,7 +294,7 @@ func (n *node) listenAndServe() {
 			}
 			n.log("connection from", c1.RemoteAddr())
 			go func() {
-				n.log("connecting to " + n.Connect)
+				n.log("connecting to", n.Connect)
 				c2, err := n.dial()
 				if err != nil {
 					n.log(err)
@@ -302,7 +325,7 @@ func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 
 // append node info to arguments and send to logging channel
 func (n *node) log(v ...interface{}) {
-	n.logInterface <- append([]interface{}{"--> " + n.Mode + n.Name + " -/"}, v...)
+	n.logInterface <- append([]interface{}{"-->", n.Mode + n.Name + " -/"}, v...)
 }
 
-//TODO renaming variables, CODE REVIEW, better logging
+//TODO documentation
