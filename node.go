@@ -218,6 +218,7 @@ func (n *node) client() error {
 	n.listen = func() (net.Listener, error) {
 		return net.Listen("tcp", n.Accept)
 	}
+	TLSConfig := new(tls.Config)
 	host, _, err := net.SplitHostPort(n.Connect)
 	if err != nil {
 		return err
@@ -225,8 +226,25 @@ func (n *node) client() error {
 	if host == "" {
 		host = "localhost"
 	}
+	TLSConfig.ServerName = host
+	TLSConfig.RootCAs = certPool
+	TLSConfig.CipherSuites = []uint16{
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
+		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA}
+	TLSConfig.MinVersion = tls.VersionTLS11
+	//MaxVersion needed because of bug with TLS_FALLBACK_SCSV gonna be fixed in go 1.5
+	TLSConfig.MaxVersion = tls.VersionTLS12
+	TLSConfig.NextProtos = []string{"http/1.1"}
 	n.dial = func() (net.Conn, error) {
-		return tls.Dial("tcp", n.Connect, &tls.Config{ServerName: host, RootCAs: certPool})
+		return tls.Dial("tcp", n.Connect, TLSConfig)
 	}
 	n.listenAndServe()
 	return nil
