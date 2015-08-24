@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
@@ -11,6 +12,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -45,7 +47,9 @@ type node struct {
 // extract data from the array of paths to certs/keys/keypairs
 // then start the node in server/client mode with the data
 func (n *node) run() {
-	n.log("starting up")
+	r := bufio.NewReader(os.Stdin)
+	r.Reset(os.Stdin)
+	n.log("initializing")
 	defer n.log("exiting")
 	defer n.nodeWG.Done()
 	// you can use 5000 as a port instead of :5000
@@ -237,7 +241,7 @@ func (OCSPC *OCSPCert) updateStapleLoop() {
 
 // run node as client
 func (n *node) client() error {
-	var certPool *x509.CertPool //todo check if even needed
+	var certPool *x509.CertPool
 	if n.Cert != "" {
 		certPool = x509.NewCertPool()
 		raw, err := ioutil.ReadFile(n.Cert)
@@ -308,14 +312,12 @@ func (n *node) listenAndServe() {
 					c1.Close()
 					return
 				}
-				n.log("beginning tunnel from", c1.RemoteAddr(), "to", c1.LocalAddr(),
-					"to", c2.LocalAddr(), "to", c2.RemoteAddr())
+				n.log("beginning tunnel from", c1.RemoteAddr(), "to", c1.LocalAddr(), "to", c2.LocalAddr(), "to", c2.RemoteAddr())
 				n.copyWG.Add(2)
 				go n.copy(c1, c2)
 				go n.copy(c2, c1)
 				n.copyWG.Wait()
-				n.log("closed tunnel from", c1.RemoteAddr(), "to", c1.LocalAddr(),
-					"to", c2.LocalAddr(), "to", c2.RemoteAddr())
+				n.log("closed tunnel from", c1.RemoteAddr(), "to", c1.LocalAddr(), "to", c2.LocalAddr(), "to", c2.RemoteAddr())
 			}()
 		}
 	}
