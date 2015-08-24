@@ -38,11 +38,13 @@ func (gTLS *goTunneLS) receiveAndLog() {
 			log.SetOutput(logFile)
 			log.Println("--> global -/ beginning logging")
 			for {
-				if _, err = os.Stat(gTLS.Logfile); os.IsNotExist(err) {
-					break
+				if _, err = os.Stat(gTLS.Logfile); err != nil {
+					if os.IsNotExist(err) {
+						break
+					}
+					log.Fatal(err)
 				}
 				log.Println(<-gTLS.logInterface...)
-
 			}
 		}
 	}

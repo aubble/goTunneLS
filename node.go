@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"errors"
-	"golang.org/x/crypto/ocsp"
 	"io"
 	"io/ioutil"
 	"net"
@@ -15,6 +14,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/crypto/ocsp"
 )
 
 // node represents the proxy for goTunneLS
@@ -24,16 +25,16 @@ import (
 // client mode listens on the Accept address for plain tcp
 // connections to tunnel to the Connect address with tls
 type node struct {
-	Name                   string        // name for logging
-	Mode                   string        // tunnel mode
-	Accept                 string        // listen address
-	Connect                string        // connect address
-	Cert                   string        // path to cert
-	Key                    string        // path to key
-	Issuer                 string        // issuer for OCSP
-	Timeout                time.Duration // timeout for sleep after network error in seconds
-	OCSPInterval           time.Duration // interval between OCSP updates when OCSP responder nextupdate is nil, otherwise wait till next update
-	TicketRotationInterval time.Duration
+	Name                   string                       // name for logging
+	Mode                   string                       // tunnel mode
+	Accept                 string                       // listen address
+	Connect                string                       // connect address
+	Cert                   string                       // path to cert
+	Key                    string                       // path to key
+	Issuer                 string                       // issuer for OCSP
+	Timeout                time.Duration                // timeout for sleep after network error in seconds
+	OCSPInterval           time.Duration                // interval between OCSP updates when OCSP responder nextupdate is nil, otherwise wait till next update
+	TicketRotationInterval time.Duration                // log
 	copyWG                 sync.WaitGroup               // waitgroup for the copy goroutines, to log in sync after they exit
 	listen                 func() (net.Listener, error) // listen on accept function
 	dial                   func() (net.Conn, error)     // dial on connect function
@@ -333,5 +334,3 @@ func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 func (n *node) log(v ...interface{}) {
 	n.logInterface <- append([]interface{}{"-->", n.Mode + n.Name + " -/"}, v...)
 }
-
-//TODO documentation
