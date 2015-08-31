@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
@@ -12,7 +11,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -27,28 +25,26 @@ import (
 // client mode listens on the Accept address for plain tcp
 // connections to tunnel to the Connect address with tls
 type node struct {
-	Name                   string                       // name for logging
-	Mode                   string                       // tunnel mode
-	Accept                 string                       // listen address
-	Connect                string                       // connect address
-	Cert                   string                       // path to cert
-	Key                    string                       // path to key
-	Issuer                 string                       // issuer for OCSP
-	Timeout                time.Duration                // timeout for sleep after network error in seconds
-	OCSPInterval           time.Duration                // interval between OCSP updates when OCSP responder nextupdate is nil, otherwise wait till next update
-	TicketRotationInterval time.Duration                // log
-	copyWG                 sync.WaitGroup               // waitgroup for the copy goroutines, to log in sync after they exit
-	listen                 func() (net.Listener, error) // listen on accept function
-	dial                   func() (net.Conn, error)     // dial on connect function
-	logInterface           chan []interface{}           // logging channel
-	nodeWG                 sync.WaitGroup
+	Name                       string                       // name for logging
+	Mode                       string                       // tunnel mode
+	Accept                     string                       // listen address
+	Connect                    string                       // connect address
+	Cert                       string                       // path to cert
+	Key                        string                       // path to key
+	Issuer                     string                       // issuer for OCSP
+	Timeout                    time.Duration                // timeout for sleep after network error in seconds
+	OCSPInterval               time.Duration                // interval between OCSP updates when OCSP responder nextupdate is nil, otherwise wait till next update
+	SessionKeyRotationInterval time.Duration                // log
+	copyWG                     sync.WaitGroup               // waitgroup for the copy goroutines, to log in sync after they exit
+	listen                     func() (net.Listener, error) // listen on accept function
+	dial                       func() (net.Conn, error)     // dial on connect function
+	logInterface               chan []interface{}           // logging channel
+	nodeWG                     sync.WaitGroup
 }
 
 // extract data from the array of paths to certs/keys/keypairs
 // then start the node in server/client mode with the data
 func (n *node) run() {
-	r := bufio.NewReader(os.Stdin)
-	r.Reset(os.Stdin)
 	n.log("initializing")
 	defer n.log("exiting")
 	defer n.nodeWG.Done()
@@ -67,6 +63,26 @@ func (n *node) run() {
 	default:
 		n.log("no valid mode")
 	}
+}
+
+type tcpKeepAliveListener struct {
+	*net.TCPListener
+}
+
+func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
+	tc, err := ln.AcceptTCP()
+	if err != nil {
+		return
+	}
+	err = tc.SetKeepAlive(true)
+	if err != nil {
+		return
+	}
+	err = tc.SetKeepAlivePeriod(time.Second * 10)
+	if err != nil {
+		return
+	}
+	return tc, nil
 }
 
 // run node as server
@@ -142,26 +158,39 @@ func (n *node) server() error {
 			panic(errors.New("cannot create new session ticket key"))
 		}
 	}
-	n.log("creating inital session ticket keys")
+	n.log("initializing session ticket key rotation")
 	keys := make([][32]byte, 3)
 	updateKey(&keys[0])
 	updateKey(&keys[1])
 	updateKey(&keys[2])
 	go func() {
 		for {
-			n.log("updating session ticket keys")
 			TLSConfig.SetSessionTicketKeys(keys)
-			time.Sleep(time.Second * n.TicketRotationInterval)
+			time.Sleep(time.Second * n.SessionKeyRotationInterval)
+			n.log("updating session ticket rotation keys")
 			keys[0] = keys[1]
 			keys[1] = keys[2]
 			updateKey(&keys[2])
 		}
 	}()
 	n.listen = func() (net.Listener, error) {
-		return tls.Listen("tcp", n.Accept, TLSConfig)
+		ln, err := net.Listen("tcp", n.Accept)
+		if err != nil {
+			return nil, err
+		}
+		return tls.NewListener(tcpKeepAliveListener{ln.(*net.TCPListener)}, TLSConfig), err
 	}
-	n.dial = func() (net.Conn, error) {
-		return net.Dial("tcp", n.Connect)
+	n.dial = func() (c net.Conn, err error) {
+		c, err = net.Dial("tcp", n.Connect)
+		if err != nil {
+			return
+		}
+		err = c.(*net.TCPConn).SetKeepAlive(true)
+		if err != nil {
+			return
+		}
+		err = c.(*net.TCPConn).SetKeepAlivePeriod(time.Second * 10)
+		return
 	}
 	n.listenAndServe()
 	return nil
@@ -251,9 +280,6 @@ func (n *node) client() error {
 		n.log("adding", n.Cert, "to pool")
 		certPool.AppendCertsFromPEM(raw)
 	}
-	n.listen = func() (net.Listener, error) {
-		return net.Listen("tcp", n.Accept)
-	}
 	TLSConfig := new(tls.Config)
 	host, _, err := net.SplitHostPort(n.Connect)
 	if err != nil {
@@ -278,33 +304,41 @@ func (n *node) client() error {
 	TLSConfig.MinVersion = tls.VersionTLS11
 	TLSConfig.NextProtos = []string{"http/1.1"}
 	n.dial = func() (net.Conn, error) {
-		return tls.Dial("tcp", n.Connect, TLSConfig)
+		d := &net.Dialer{KeepAlive: time.Second * 10}
+		return tls.DialWithDialer(d, "tcp", n.Connect, TLSConfig)
 	}
+	n.listen = func() (net.Listener, error) {
+		ln, err := net.Listen("tcp", n.Accept)
+		if err != nil {
+			return nil, err
+		}
+		return tcpKeepAliveListener{ln.(*net.TCPListener)}, nil
+	}
+
 	n.listenAndServe()
 	return nil
 }
 
 func (n *node) listenAndServe() {
-	for {
+	handleError := func(err error) {
+		n.log(err)
+		n.log("sleeping for", int64(n.Timeout))
+		time.Sleep(time.Second * n.Timeout)
+	}
+	listenAndServeErr := func() error {
 		ln, err := n.listen()
 		if err != nil {
-			n.log(err)
-			n.log("sleeping for", int64(n.Timeout))
-			time.Sleep(time.Second * n.Timeout)
-			continue
+			return err
 		}
+		defer ln.Close()
 		n.log("listening on", n.Accept)
 		for {
 			c1, err := ln.Accept()
 			if err != nil {
-				n.log(err)
-				n.log("sleeping for", int64(n.Timeout))
-				time.Sleep(time.Second * n.Timeout)
-				ln.Close()
-				break
+				return err
 			}
 			n.log("connection from", c1.RemoteAddr())
-			go func() {
+			go func(c1 net.Conn) {
 				n.log("connecting to", n.Connect)
 				c2, err := n.dial()
 				if err != nil {
@@ -318,8 +352,12 @@ func (n *node) listenAndServe() {
 				go n.copy(c2, c1)
 				n.copyWG.Wait()
 				n.log("closed tunnel from", c1.RemoteAddr(), "to", c1.LocalAddr(), "to", c2.LocalAddr(), "to", c2.RemoteAddr())
-			}()
+			}(c1)
 		}
+	}
+	for {
+		err := listenAndServeErr()
+		handleError(err)
 	}
 }
 
