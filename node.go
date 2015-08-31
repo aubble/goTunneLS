@@ -35,6 +35,7 @@ type node struct {
 	Timeout                    time.Duration                // timeout for sleep after network error in seconds
 	OCSPInterval               time.Duration                // interval between OCSP updates when OCSP responder nextupdate is nil, otherwise wait till next update
 	SessionKeyRotationInterval time.Duration                // log
+	TCPKeepAliveInterval       time.Duration                // tcp keep alive interval
 	copyWG                     sync.WaitGroup               // waitgroup for the copy goroutines, to log in sync after they exit
 	listen                     func() (net.Listener, error) // listen on accept function
 	dial                       func() (net.Conn, error)     // dial on connect function
@@ -46,8 +47,8 @@ type node struct {
 // then start the node in server/client mode with the data
 func (n *node) run() {
 	n.log("initializing")
-	defer n.log("exiting")
 	defer n.nodeWG.Done()
+	defer n.log("exiting")
 	// you can use 5000 as a port instead of :5000
 	if !strings.Contains(n.Accept, ":") {
 		n.Accept = ":" + n.Accept
@@ -55,6 +56,10 @@ func (n *node) run() {
 	if !strings.Contains(n.Connect, ":") {
 		n.Connect = ":" + n.Connect
 	}
+	n.Timeout *= time.Second
+	n.OCSPInterval *= time.Second
+	n.SessionKeyRotationInterval *= time.Second
+	n.TCPKeepAliveInterval *= time.Second
 	switch strings.ToLower(n.Mode) {
 	case "server":
 		n.log(n.server())
@@ -67,6 +72,7 @@ func (n *node) run() {
 
 type tcpKeepAliveListener struct {
 	*net.TCPListener
+	tcpKeepAliveInterval time.Duration
 }
 
 func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
@@ -78,7 +84,7 @@ func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
 	if err != nil {
 		return
 	}
-	err = tc.SetKeepAlivePeriod(time.Second * 10)
+	err = tc.SetKeepAlivePeriod(ln.tcpKeepAliveInterval)
 	if err != nil {
 		return
 	}
@@ -100,7 +106,7 @@ func (n *node) server() error {
 		n.log("OCSP servers found", cert.Leaf.OCSPServer)
 		n.log("initalizing OCSP stapling")
 		OCSPC := OCSPCert{n: n, cert: &cert}
-		OCSPC.n.log("reading issuer", n.Issuer)
+		n.log("reading issuer", n.Issuer)
 		issuerRAW, err := ioutil.ReadFile(n.Issuer)
 		if err != nil {
 			return err
@@ -121,12 +127,12 @@ func (n *node) server() error {
 		if OCSPC.issuer == nil {
 			return errors.New("no issuer")
 		}
-		OCSPC.n.log("creating the OCSP request")
+		n.log("creating the OCSP request")
 		OCSPC.req, err = ocsp.CreateRequest(OCSPC.cert.Leaf, OCSPC.issuer, nil)
 		if err != nil {
 			return err
 		}
-		OCSPC.n.log("starting stapleLoop")
+		n.log("starting stapleLoop")
 		go OCSPC.updateStapleLoop()
 		TLSConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 			OCSPC.RLock()
@@ -148,14 +154,15 @@ func (n *node) server() error {
 		tls.TLS_RSA_WITH_AES_128_CBC_SHA,
 		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
 		tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
-		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA}
+		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
+	}
 	TLSConfig.PreferServerCipherSuites = true
 	TLSConfig.MinVersion = tls.VersionTLS11
 	TLSConfig.NextProtos = []string{"http/1.1"}
 	updateKey := func(key *[32]byte) {
 		if _, err := rand.Read((*key)[:]); err != nil {
 			n.log(err)
-			panic(errors.New("cannot create new session ticket key"))
+			n.log("cannot create new session ticket key")
 		}
 	}
 	n.log("initializing session ticket key rotation")
@@ -166,7 +173,7 @@ func (n *node) server() error {
 	go func() {
 		for {
 			TLSConfig.SetSessionTicketKeys(keys)
-			time.Sleep(time.Second * n.SessionKeyRotationInterval)
+			time.Sleep(n.SessionKeyRotationInterval)
 			n.log("updating session ticket rotation keys")
 			keys[0] = keys[1]
 			keys[1] = keys[2]
@@ -178,7 +185,7 @@ func (n *node) server() error {
 		if err != nil {
 			return nil, err
 		}
-		return tls.NewListener(tcpKeepAliveListener{ln.(*net.TCPListener)}, TLSConfig), err
+		return tls.NewListener(tcpKeepAliveListener{ln.(*net.TCPListener), n.TCPKeepAliveInterval}, TLSConfig), err
 	}
 	n.dial = func() (c net.Conn, err error) {
 		c, err = net.Dial("tcp", n.Connect)
@@ -189,7 +196,7 @@ func (n *node) server() error {
 		if err != nil {
 			return
 		}
-		err = c.(*net.TCPConn).SetKeepAlivePeriod(time.Second * 10)
+		err = c.(*net.TCPConn).SetKeepAlivePeriod(n.TCPKeepAliveInterval)
 		return
 	}
 	n.listenAndServe()
@@ -234,19 +241,16 @@ func (OCSPC *OCSPCert) updateStaple() error {
 	if err != nil {
 		return err
 	}
-	if OCSPResp.NextUpdate != (time.Time{}) {
-		OCSPC.nextUpdate = OCSPResp.NextUpdate
+	if OCSPResp.NextUpdate.IsZero() { //TODO check if this works
+		OCSPC.nextUpdate = time.Now().Add(OCSPC.n.OCSPInterval)
 	} else {
-		OCSPC.nextUpdate = time.Now().Add(time.Second * OCSPC.n.OCSPInterval)
+		OCSPC.nextUpdate = OCSPResp.NextUpdate
 	}
 	OCSPC.n.log("updating OCSP staple")
-	cert := *OCSPC.cert
-	cert.OCSPStaple = OCSPStaple
 	OCSPC.Lock()
-	OCSPC.cert = &cert
+	OCSPC.cert.OCSPStaple = OCSPStaple
 	OCSPC.Unlock()
-	resp.Body.Close()
-	OCSPC.n.log("next OCSP update at", OCSPC.nextUpdate)
+	OCSPC.n.log("next OCSP staple at", OCSPC.nextUpdate)
 	return nil
 }
 
@@ -256,14 +260,14 @@ func (OCSPC *OCSPCert) updateStapleLoop() {
 			OCSPC.n.log("stapleLoop: sleeping for", OCSPC.nextUpdate.Sub(time.Now()).Seconds())
 			time.Sleep(OCSPC.nextUpdate.Sub(time.Now()))
 		} else {
-			OCSPC.n.log(err)
 			if time.Now().After(OCSPC.nextUpdate) {
 				OCSPC.Lock()
 				OCSPC.cert.OCSPStaple = nil
 				OCSPC.Unlock()
 			}
+			OCSPC.n.log(err)
 			OCSPC.n.log("stapleLoop: sleeping for", int64(OCSPC.n.Timeout))
-			time.Sleep(time.Second * OCSPC.n.Timeout)
+			time.Sleep(OCSPC.n.Timeout)
 		}
 	}
 }
@@ -280,7 +284,6 @@ func (n *node) client() error {
 		n.log("adding", n.Cert, "to pool")
 		certPool.AppendCertsFromPEM(raw)
 	}
-	TLSConfig := new(tls.Config)
 	host, _, err := net.SplitHostPort(n.Connect)
 	if err != nil {
 		return err
@@ -288,6 +291,7 @@ func (n *node) client() error {
 	if host == "" {
 		host = "localhost"
 	}
+	TLSConfig := new(tls.Config)
 	TLSConfig.ServerName = host
 	TLSConfig.RootCAs = certPool
 	TLSConfig.CipherSuites = []uint16{
@@ -300,11 +304,12 @@ func (n *node) client() error {
 		tls.TLS_RSA_WITH_AES_128_CBC_SHA,
 		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
 		tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
-		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA}
+		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
+	}
 	TLSConfig.MinVersion = tls.VersionTLS11
 	TLSConfig.NextProtos = []string{"http/1.1"}
 	n.dial = func() (net.Conn, error) {
-		d := &net.Dialer{KeepAlive: time.Second * 10}
+		d := &net.Dialer{KeepAlive: n.TCPKeepAliveInterval}
 		return tls.DialWithDialer(d, "tcp", n.Connect, TLSConfig)
 	}
 	n.listen = func() (net.Listener, error) {
@@ -312,9 +317,8 @@ func (n *node) client() error {
 		if err != nil {
 			return nil, err
 		}
-		return tcpKeepAliveListener{ln.(*net.TCPListener)}, nil
+		return tcpKeepAliveListener{ln.(*net.TCPListener), n.TCPKeepAliveInterval}, nil
 	}
-
 	n.listenAndServe()
 	return nil
 }
@@ -323,7 +327,7 @@ func (n *node) listenAndServe() {
 	handleError := func(err error) {
 		n.log(err)
 		n.log("sleeping for", int64(n.Timeout))
-		time.Sleep(time.Second * n.Timeout)
+		time.Sleep(n.Timeout)
 	}
 	listenAndServeErr := func() error {
 		ln, err := n.listen()
@@ -363,11 +367,11 @@ func (n *node) listenAndServe() {
 
 // copy all data from src to dst
 func (n *node) copy(dst io.WriteCloser, src io.Reader) {
+	defer n.copyWG.Done()
+	defer dst.Close()
 	if _, err := io.Copy(dst, src); err != nil {
 		n.log(err)
 	}
-	n.copyWG.Done()
-	dst.Close()
 }
 
 // append node info to arguments and send to logging channel
