@@ -233,6 +233,7 @@ func (OCSPC *OCSPCert) updateStaple() error {
 	}
 	OCSPC.n.log("reading response")
 	OCSPStaple, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
 	if err != nil {
 		return err
 	}
@@ -367,11 +368,11 @@ func (n *node) listenAndServe() {
 
 // copy all data from src to dst
 func (n *node) copy(dst io.WriteCloser, src io.Reader) {
-	defer n.copyWG.Done()
-	defer dst.Close()
 	if _, err := io.Copy(dst, src); err != nil {
 		n.log(err)
 	}
+	n.copyWG.Done()
+	dst.Close()
 }
 
 // append node info to arguments and send to logging channel
