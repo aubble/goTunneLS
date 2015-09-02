@@ -32,6 +32,7 @@ type node struct {
 	Cert                       string                       // path to cert
 	Key                        string                       // path to key
 	Issuer                     string                       // issuer for OCSP
+	TLSConfig                  *tls.Config                  // tls configuration
 	Timeout                    time.Duration                // timeout for sleep after network error in seconds
 	OCSPInterval               time.Duration                // interval between OCSP updates when OCSP responder nextupdate is nil, otherwise wait till next update
 	SessionKeyRotationInterval time.Duration                // log
@@ -60,6 +61,20 @@ func (n *node) run() {
 	n.OCSPInterval *= time.Second
 	n.SessionKeyRotationInterval *= time.Second
 	n.TCPKeepAliveInterval *= time.Second
+	n.TLSConfig.CipherSuites = []uint16{
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
+		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
+	}
+	n.TLSConfig.MinVersion = tls.VersionTLS11
+	n.TLSConfig.NextProtos = []string{"http/1.1"}
 	switch strings.ToLower(n.Mode) {
 	case "server":
 		n.log(n.server())
@@ -101,7 +116,6 @@ func (n *node) server() error {
 	if cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0]); err != nil {
 		return err
 	}
-	TLSConfig := new(tls.Config)
 	if cert.Leaf.OCSPServer != nil {
 		n.log("OCSP servers found", cert.Leaf.OCSPServer)
 		n.log("initalizing OCSP stapling")
@@ -134,7 +148,7 @@ func (n *node) server() error {
 		}
 		n.log("starting stapleLoop")
 		go OCSPC.updateStapleLoop()
-		TLSConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+		n.TLSConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 			OCSPC.RLock()
 			defer OCSPC.RUnlock()
 			return OCSPC.cert, nil
@@ -143,22 +157,8 @@ func (n *node) server() error {
 		//		TLSConfig.Certificates = []tls.Certificate{cert}
 		//TODO FIX THIS BUG
 	}
-	TLSConfig.Certificates = []tls.Certificate{cert}
-	TLSConfig.CipherSuites = []uint16{
-		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-		tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-		tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-		tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-		tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-		tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
-		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
-	}
-	TLSConfig.PreferServerCipherSuites = true
-	TLSConfig.MinVersion = tls.VersionTLS11
-	TLSConfig.NextProtos = []string{"http/1.1"}
+	n.TLSConfig.Certificates = []tls.Certificate{cert}
+	n.TLSConfig.PreferServerCipherSuites = true
 	updateKey := func(key *[32]byte) {
 		if _, err := rand.Read((*key)[:]); err != nil {
 			n.log(err)
@@ -172,7 +172,7 @@ func (n *node) server() error {
 	updateKey(&keys[2])
 	go func() {
 		for {
-			TLSConfig.SetSessionTicketKeys(keys)
+			n.TLSConfig.SetSessionTicketKeys(keys)
 			time.Sleep(n.SessionKeyRotationInterval)
 			n.log("updating session ticket rotation keys")
 			keys[0] = keys[1]
@@ -185,7 +185,7 @@ func (n *node) server() error {
 		if err != nil {
 			return nil, err
 		}
-		return tls.NewListener(tcpKeepAliveListener{ln.(*net.TCPListener), n.TCPKeepAliveInterval}, TLSConfig), err
+		return tls.NewListener(tcpKeepAliveListener{ln.(*net.TCPListener), n.TCPKeepAliveInterval}, n.TLSConfig), err
 	}
 	n.dial = func() (c net.Conn, err error) {
 		c, err = net.Dial("tcp", n.Connect)
@@ -292,26 +292,11 @@ func (n *node) client() error {
 	if host == "" {
 		host = "localhost"
 	}
-	TLSConfig := new(tls.Config)
-	TLSConfig.ServerName = host
-	TLSConfig.RootCAs = certPool
-	TLSConfig.CipherSuites = []uint16{
-		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-		tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-		tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-		tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-		tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-		tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
-		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
-	}
-	TLSConfig.MinVersion = tls.VersionTLS11
-	TLSConfig.NextProtos = []string{"http/1.1"}
+	n.TLSConfig.ServerName = host
+	n.TLSConfig.RootCAs = certPool
 	n.dial = func() (net.Conn, error) {
 		d := &net.Dialer{KeepAlive: n.TCPKeepAliveInterval}
-		return tls.DialWithDialer(d, "tcp", n.Connect, TLSConfig)
+		return tls.DialWithDialer(d, "tcp", n.Connect, n.TLSConfig)
 	}
 	n.listen = func() (net.Listener, error) {
 		ln, err := net.Listen("tcp", n.Accept)
