@@ -7,6 +7,7 @@
 
 TLS wrapper in go! Wrap existing connections in TLS to bypass annoying DPI (deep packet filtering) if you're say using SSH and being blocked, or to just protect your connections.
 
+
 ## How it works
 
  * +++ represents plain data 
@@ -19,7 +20,7 @@ TLS wrapper in go! Wrap existing connections in TLS to bypass annoying DPI (deep
 
 The link between the client and server is either insecure or it uses say SSH as the protocol which is picked up by DPI and thus blocked. You can tunnel it instead through a goTunneLS tunnel which is encrypted via TLS, which makes it much less likely to be blocked by DPI as the entire web uses TLS.
 
-### GoTunneLS connections
+### goTunneLS connections
 
 **client &nbsp; +++---> &nbsp; gTLS client &nbsp; ###--> &nbsp; gTLS server &nbsp; +++---> &nbsp; server**
 
@@ -56,6 +57,7 @@ In that configuration file there are two goTunneLS "nodes" defined, 1 server and
 Hopefully it makes more sense now to you. nc does everything over plain text and goTunneLS allows you to wrap its insecure connection in TLS. You can take out the server node of the config.json, and take it and actually run it on a server somewhere, just change the Connect address of the client node to the Server's listening address and everything will work the same. You just tunneled nc through TLS!
 
 Now that you understand how it works, also know that its pure TLS, know that no other protocol is being used other than TLS to tunnel so its not necessary to use both the server and client. If a application communicates via TLS but the other does not, you only need to wrap insecure one.
+
 
 ## Instructions
 
