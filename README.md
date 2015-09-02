@@ -7,6 +7,9 @@
 
 TLS wrapper in go! Wrap existing connections in TLS to bypass annoying DPI (deep packet filtering) if you're say using SSH and being blocked, or to just protect your connections.
 
+## Install
+
+	go get -u github.com/aubble/goTunneLS
 
 ## How it works
 
@@ -26,24 +29,65 @@ The link between the client and server is either insecure or it uses say SSH as 
 
 Now the difference is that whatever the client sends to the gTLS client is forwarded over to the gTLS server and then finally over to the server and vice-versa. The advantage here is that the gTLS client and gTLS server communicate via TLS thus protecting the data if the client/server communicate insecurely and also likely bypassing any DPI as TLS is almost never blocked.
 
-#### Client
+#### gTLS Client
 
-The client listens on a address for plain TCP connections and proxies them to another address via TLS and TCP.
+Basically the client listens on a address for plain TCP connections and proxies them to another address via TLS and TCP.
 
-#### Server
+#### gTLS Server
 
-The server does the exact opposite. It listens on a address for TLS TCP connections and then proxies those over to another address via plain TCP.
+Basically the server does the exact opposite. It listens on a address for TLS TCP connections and then proxies those over to another address via plain TCP.
 
 ## Instructions
 
-The configuration file's syntax is JSON and it consists of an array of the nodes and the path to the logFile. Each of these nodes in the array are either in server or client mode depending on the Mode field.
+The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and the path to the logFile. Each of these nodes in the array are either in server or client mode depending on the Mode field. Please take a look at the example config.json for an example
 
-#### Server Options
+###Options
+
+#####Mode -- required always
+Sets node as client/server
+
+#####Name
+Name for logging
+
+#####Accept -- required
+Listen address; format is host:port. If host is missing, localhost is assumed
+
+#####Connect -- required
+Dial address; format is host:port. If host is missing, localhost is assumed
+
+#####Timeout
+Duration to sleep in seconds after network errors
+
+#####TCPKeepAliveInterval 
+Interval between TCP keep alives
 
 
+####Server Options
+
+#####Cert -- required
+Path to the certificate file to send to client
+
+#####Key -- required
+Path to the key file 
+
+#####Issuer
+Path to the issuer file of the cert. Only used in OCSP to validate the response.
+
+#####OCSPInterval
+Interval between OCSP staple updates in seconds. Only applies when the OCSP responder has the most up to date information, otherwise the interval between OCSP staple updates will be until the next update.
+
+#####SessionKeyRotationInterval 
+Interval between session key rotation in seconds
 
 
-#### Client Options
+####Client Options
+
+#####Cert
+Optional field in a client node for the path of the RootCA for the certificate from the server.
+Useful when using self signed certificates.
+
+####LogPath
+Path to the log file
 
 
 ## Example

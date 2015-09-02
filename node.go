@@ -42,12 +42,12 @@ type node struct {
 	Issuer string
 
 	// tls configuration
-	TLSConfig *tls.Config
+	tlsConfig *tls.Config
 
-	// timeout for sleep after network error in seconds
+	// Duration for sleep after network error in seconds
 	Timeout time.Duration
 
-	// interval between OCSP staple updates in seconds. only applies when OCSP responder has most up to date information, otherwise the interval is until the next update
+	// interval between OCSP staple updates in seconds. Only applies when OCSP responder has most up to date information, otherwise the interval is until the next update
 	OCSPInterval time.Duration
 
 	// interval between session ticket key rotations in seconds
@@ -88,8 +88,8 @@ func (n *node) run() {
 	n.SessionKeyRotationInterval *= time.Second
 	n.TCPKeepAliveInterval *= time.Second
 	// set mutual TLSConfig fields
-	n.TLSConfig = new(tls.Config)
-	n.TLSConfig.CipherSuites = []uint16{
+	n.tlsConfig = new(tls.Config)
+	n.tlsConfig.CipherSuites = []uint16{
 		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
@@ -101,8 +101,8 @@ func (n *node) run() {
 		tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
 		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
 	}
-	n.TLSConfig.MinVersion = tls.VersionTLS11
-	n.TLSConfig.NextProtos = []string{"http/1.1"}
+	n.tlsConfig.MinVersion = tls.VersionTLS11
+	n.tlsConfig.NextProtos = []string{"http/1.1"}
 	switch strings.ToLower(n.Mode) {
 	case "server":
 		n.logln(n.server())
@@ -180,13 +180,13 @@ func (n *node) server() error {
 		}
 		n.logln("starting stapleLoop")
 		go OCSPC.updateStapleLoop()
-		n.TLSConfig.GetCertificate = OCSPC.getCertificate
+		n.tlsConfig.GetCertificate = OCSPC.getCertificate
 		//	} else {
 		//		TLSConfig.Certificates = []tls.Certificate{cert}
 		//TODO FIX THIS BUG
 	}
-	n.TLSConfig.Certificates = []tls.Certificate{cert}
-	n.TLSConfig.PreferServerCipherSuites = true
+	n.tlsConfig.Certificates = []tls.Certificate{cert}
+	n.tlsConfig.PreferServerCipherSuites = true
 	updateKey := func(key *[32]byte) {
 		if _, err := rand.Read((*key)[:]); err != nil {
 			n.logln(err)
@@ -200,7 +200,7 @@ func (n *node) server() error {
 	updateKey(&keys[2])
 	go func() {
 		for {
-			n.TLSConfig.SetSessionTicketKeys(keys)
+			n.tlsConfig.SetSessionTicketKeys(keys)
 			time.Sleep(n.SessionKeyRotationInterval)
 			n.logln("updating session ticket rotation keys")
 			keys[0] = keys[1]
@@ -213,7 +213,7 @@ func (n *node) server() error {
 		if err != nil {
 			return nil, err
 		}
-		return tls.NewListener(tcpKeepAliveListener{ln.(*net.TCPListener), n.TCPKeepAliveInterval}, n.TLSConfig), err
+		return tls.NewListener(tcpKeepAliveListener{ln.(*net.TCPListener), n.TCPKeepAliveInterval}, n.tlsConfig), err
 	}
 	n.dial = func() (c net.Conn, err error) {
 		c, err = net.Dial("tcp", n.Connect)
@@ -252,11 +252,11 @@ func (n *node) client() error {
 	if host == "" {
 		host = "localhost"
 	}
-	n.TLSConfig.ServerName = host
-	n.TLSConfig.RootCAs = certPool
+	n.tlsConfig.ServerName = host
+	n.tlsConfig.RootCAs = certPool
 	n.dial = func() (net.Conn, error) {
 		d := &net.Dialer{KeepAlive: n.TCPKeepAliveInterval}
-		return tls.DialWithDialer(d, "tcp", n.Connect, n.TLSConfig)
+		return tls.DialWithDialer(d, "tcp", n.Connect, n.tlsConfig)
 	}
 	n.listen = func() (net.Listener, error) {
 		ln, err := net.Listen("tcp", n.Accept)
