@@ -78,7 +78,7 @@ SessionKeyRotationInterval -- interval between session key rotation in seconds, 
 
 ####Optional Client Options
 
-Cert -- Optional field in the client node for the path of the RootCA for the certificate from the server. Useful when using self signed certificates (like below)
+Cert -- path to the RootCA for the certificate from the server. Useful when using self signed certificates (like below) that are not in the operating systems store
 
 
 ###LogPath
@@ -88,7 +88,7 @@ Outside of the array of nodes this is the other variable. It's the path to logFi
 I've already setup a openssl.cnf that should work for most people, you can of course use any certificate you want but this should make it much more streamlined for beginners. Open tls/openssl.cnf and modify the req\_distinguished\_name to fit your liking. Change the name and everything. Next choose if you want RSA or ECDSA. I recommend going for ECDSA, the keys are shorter and faster and more secure.
 
 ####ECDSA - RECOMMENDED
-Creating a ECDSA signed cert is a two step process. 
+Creating a ECDSA signed cert is a two step process.
 First generate the key with
 
 	openssl ecparam -genkey -name secp384r1 -out key.pem
@@ -105,16 +105,16 @@ Next create the cert
 
 	openssl req -new -x509 -config openssl.cnf -key key.pem -nodes -out cert.pem
 
-There you go, you're done :) 
+There you go, you're done :)
 
 ####RSA
-You can edit the default\_bits field in the openssl.cnf if you don't want a RSA key size of 4096 but maybe instead 2048. 
+You can edit the default\_bits field in the openssl.cnf if you don't want a RSA key size of 4096 but maybe instead 2048.
 
 Once you are ready cd into the tls directory and run
 
 	openssl req -new -x509 -config openssl.cnf -nodes -out cert.pem
 
-That command will generate a self signed certificate and key for you in the directory to use with goTunneLS. Make sure you changed the CN in openssl.cnf to match the domain name of your server and you're good to go! 
+That command will generate a self signed certificate and key for you in the directory to use with goTunneLS. Make sure you changed the CN in openssl.cnf to match the domain name of your server and you're good to go!
 
 ---
 
