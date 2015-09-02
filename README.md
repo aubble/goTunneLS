@@ -102,13 +102,11 @@ leave that nc running and open a new terminal side by side. now run
 
 this makes nc dial port 5002 on localhost (the same computer its running on). you'll notice that now when you type anything, and press enter it appears on the other nc instance running in the other terminal! but wait.... the port numbers are different how could this be? Thats goTunneLS doing its magic.
 
-In that configuration file there are two goTunneLS "nodes" defined, 1 server and 1 client. The client listens on port 5002 and proxies to port 5001 which is where the server is listening. The server then proxies the data to port 5000 which is where nc -l is listening.
+In that configuration file there are two goTunneLS "nodes" defined, 1 server and 1 client. The client listens on port 5002 and proxies to port 5001 which is where the server is listening. The server listening on port 5001 then proxies the data to port 5000 which is where nc -l is listening.
 
 Hopefully it makes more sense now to you. nc does everything over plain text and goTunneLS allows you to wrap its insecure connection in TLS. You can take out the server node of the config.json, and take it and actually run it on a server somewhere, just change the Connect address of the client node to the Server's listening address and everything will work the same. You just tunneled nc through TLS!
 
 Now that you understand how it works, also know that its pure TLS, know that no other protocol is being used other than TLS to tunnel so its not necessary to use both the server and client. If a application communicates via TLS but the other does not, you only need to wrap insecure one.
-In that configuration file there are two goTunneLS "nodes" defined, 1 server and 1 client. The client listens on port 5002 and proxies to port 5001 which is where the server is listening. The server then proxies the data to port 5000 which is where nc -l is listening.
-
 
 ## Contribute
 
