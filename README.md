@@ -13,8 +13,8 @@ TLS wrapper in go! Wrap existing connections in TLS to bypass annoying DPI (deep
 
 ## How it works
 
- * +++ represents plain data 
- 
+ * +++ represents plain data
+
  * \#\#\# represents TLS encrypted data
 
 ### Normal connections
@@ -67,7 +67,7 @@ TCPKeepAliveInterval -- interval between TCP keep alives
 
 Cert -- path to the certificate file to send to client
 
-Key -- path to the key file 
+Key -- path to the key file
 
 
 ####Optional Server fields
@@ -114,7 +114,7 @@ In that configuration file there are two goTunneLS "nodes" defined, 1 server and
 
 Contributions are very welcome. File issues for bugs, fix bugs with a pull request and if you think there is a very essential feature missing from goTunneLS, feel free to either submit a pull request or open a issue.
 
-## Contact 
+## Contact
 
 Feel free to contact me at anmol@aubble.com
 
