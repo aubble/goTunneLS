@@ -41,22 +41,21 @@ Basically the server does the exact opposite. It listens on a address for TLS TC
 
 The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and the path to the logFile. Each of these nodes in the array are either in server or client mode depending on the Mode field. Please take a look at the example config.json for an example
 
-###Options
+###Required Options
 
-**Mode -- required always**
-Sets node as client/server
+Mode -- Sets node as client/server
 
 Name -- name for logging
 
 Accept -- Listen address; format is host:port. If host is missing, localhost is assumed
 
-#####Connect -- required
+#####Connect
 Dial address; format is host:port. If host is missing, localhost is assumed
 
-#####Timeout
+#####Timeout -- optional
 Duration to sleep in seconds after network errors
 
-#####TCPKeepAliveInterval 
+#####TCPKeepAliveInterval -- optional 
 Interval between TCP keep alives
 
 
