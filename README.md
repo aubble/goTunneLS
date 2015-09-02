@@ -44,6 +44,8 @@ The configuration file's syntax is JSON and it consists of an array of the nodes
 
 ###Options
 
+#####Required
+
 Mode -- sets node as client/server
 
 Name -- name for logging
@@ -52,9 +54,11 @@ Accept -- listen address; format is host:port. If host is missing, localhost is 
 
 Connect -- dial address; format is host:port. If host is missing, localhost is assumed
 
-Timeout -- optional; duration to sleep in seconds after network errors
+#####Optional
 
-TCPKeepAliveInterval -- optional; interval between TCP keep alives
+Timeout -- duration to sleep in seconds after network errors
+
+TCPKeepAliveInterval -- interval between TCP keep alives
 
 
 #####Server Options
