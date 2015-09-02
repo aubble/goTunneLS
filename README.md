@@ -1,8 +1,5 @@
 # goTunneLS
 
-***ACTIVLEY BEING DEVELOPED BE VARY***
-
-
 ## Description
 
 TLS wrapper in go! Wrap existing connections in TLS to bypass annoying DPI (deep packet filtering) if you're say using SSH and being blocked, or to just protect your connections.
@@ -40,6 +37,8 @@ Basically the server does the exact opposite. It listens on a address for TLS TC
 ## Configuration
 
 The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and the path to the logFile. Each of these nodes in the array are either in server or client mode depending on the Mode field. Please take a look at the example config.json for an example. Otherwise here is the list of fields you can set in all the nodes.
+
+note that you can use relative file paths, relative to the config file. So say the config file is in /etc/goTunneLS. if the value of Cert is "cert.pem" that really means "/etc/goTunneLS/cert.pem" as its relative to the config file. the moment goTunneLS gets the name of the config file as the arguement it changes its directory to it.
 
 ###Fields
 
@@ -119,7 +118,7 @@ That command will generate a self signed certificate and key for you in the dire
 
 ---
 
-Now whenever you set the client config, make sure cert points to this certificate generated and when setting up the server config make sure cert and key point to their respective generated files here.
+Now whenever you set the client config, make sure Cert points to this generated certificate and when setting up the server config make sure Cert and Key point to their respective generated files here.
 
 If you also want to use this cert with say the name localhost, example.com and www.example.com, open up openssl.cnf and uncomment subjectAltName, [ alt\_names ], DNS.1 and DNS.2 and replace COMMON.NAME with the common name (its called CN in openssl.cnf) and replace SECOND.NAME with the second name you want to use. You can also add more names with DNS.n where n is the next number. Thats it for the cert configuration!
 
