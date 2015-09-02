@@ -81,9 +81,7 @@ SessionKeyRotationInterval -- interval between session key rotation in seconds
 
 ####Optional Client Options
 
-Cert
-Optional field in a client node for the path of the RootCA for the certificate from the server.
-Useful when using self signed certificates.
+Cert -- Optional field in a client node for the path of the RootCA for the certificate from the server. Useful when using self signed certificates.
 
 
 ## Example
