@@ -43,7 +43,6 @@ The configuration file's syntax is JSON and it consists of an array of the nodes
 
 
 ###Options
-
 ####Required
 
 Mode -- sets node as client/server
