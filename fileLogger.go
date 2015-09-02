@@ -5,8 +5,6 @@ import (
 	"os"
 )
 
-var logger fileLogger
-
 type fileLogger struct {
 	*log.Logger
 	logPath string

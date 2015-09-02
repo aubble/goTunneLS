@@ -6,6 +6,8 @@ import (
 	"sync"
 )
 
+var logger fileLogger
+
 // read nodes.json file into the global variable gTLS
 // then begin logging on gTLS.log channel
 // then start each node and wait until they all exit
