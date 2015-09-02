@@ -34,7 +34,19 @@ The client listens on a address for plain TCP connections and proxies them to an
 
 The server does the exact opposite. It listens on a address for TLS TCP connections and then proxies those over to another address via plain TCP.
 
-### Example
+## Instructions
+
+The configuration file's syntax is JSON and it consists of an array of the nodes and the path to the logFile. Each of these nodes in the array are either in server or client mode depending on the Mode field.
+
+#### Server Options
+
+
+
+
+#### Client Options
+
+
+## Example
 Lets take a look at the example configuration file to get an idea of how its configured.
 It not only shows off every option in both the client and server configurations, but it's also a neat little exercise. First run a goTunneLS instance with the -c flag pointing to the configuration file (the default location it looks for is /etc/goTunneLS/config.json)
 
@@ -57,18 +69,6 @@ In that configuration file there are two goTunneLS "nodes" defined, 1 server and
 Hopefully it makes more sense now to you. nc does everything over plain text and goTunneLS allows you to wrap its insecure connection in TLS. You can take out the server node of the config.json, and take it and actually run it on a server somewhere, just change the Connect address of the client node to the Server's listening address and everything will work the same. You just tunneled nc through TLS!
 
 Now that you understand how it works, also know that its pure TLS, know that no other protocol is being used other than TLS to tunnel so its not necessary to use both the server and client. If a application communicates via TLS but the other does not, you only need to wrap insecure one.
-
-
-## Instructions
-
-The configuration file's syntax is JSON and it consists of an array of the nodes and the path to the logFile. Each of these nodes in the array are either in server or client mode depending on the Mode field.
-
-#### Server Options
-
-
-
-
-#### Client Options
 
 ## Contribute
 
