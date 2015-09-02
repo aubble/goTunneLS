@@ -1,9 +1,11 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"sync"
 	"syscall"
 )
@@ -13,11 +15,17 @@ var logger fileLogger
 
 func main() {
 	log.SetPrefix("goTunneLS: ")
+	var path string
+	flag.StringVar(&path, "c", "/etc/goTunneLS/config.json", "path to configuration file")
+	flag.Parse()
 	gTLS := new(goTunneLS)
-	if err := os.Chdir("/etc/goTunneLS"); err != nil {
-		log.Fatalln("--> global -/", err)
+	gTLS.parseFile(path)
+	dir, _ := filepath.Split(path)
+	if dir != "" {
+		if err := os.Chdir(dir); err != nil {
+			log.Fatalln("--> global -/", err)
+		}
 	}
-	gTLS.parseFile("nodes.json")
 	if gTLS.LogPath != "" {
 		logger.logPath = gTLS.LogPath
 		logFile, err := os.OpenFile(gTLS.LogPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)

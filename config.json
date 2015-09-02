@@ -1,0 +1,14 @@
+{
+	"Nodes": [
+		{
+			"Name": "ssh",
+			"Mode": "client",
+			"Accept": "6621",
+			"Connect": "aubble.com:443",
+			"Cert": "cert.pem",
+			"Timeout": 10,
+			"TCPKeepAliveInterval": 15
+		}
+	],
+	"LogPath": "logs"
+}
