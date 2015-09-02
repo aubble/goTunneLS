@@ -46,13 +46,9 @@ The configuration file's syntax is JSON and it consists of an array of the nodes
 **Mode -- required always**
 Sets node as client/server
 
-Name
+Name -- name for logging
 
-Name for logging
-
-Accept -- required
-
-Listen address; format is host:port. If host is missing, localhost is assumed
+Accept -- Listen address; format is host:port. If host is missing, localhost is assumed
 
 #####Connect -- required
 Dial address; format is host:port. If host is missing, localhost is assumed
