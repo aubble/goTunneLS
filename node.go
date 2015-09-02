@@ -83,6 +83,19 @@ func (n *node) run() {
 		n.Connect = ":" + n.Connect
 	}
 	// fix timeout fields
+	if n.Timeout == 0 {
+		n.Timeout = 15
+	}
+	if n.OCSPInterval == 0 {
+		n.OCSPInterval = 180
+	}
+	if n.SessionKeyRotationInterval == 0 {
+		n.SessionKeyRotationInterval = 28800
+	}
+	if n.TCPKeepAliveInterval == 0 {
+		n.TCPKeepAliveInterval = 15
+	}
+	n.Timeout *= time.Second
 	n.Timeout *= time.Second
 	n.OCSPInterval *= time.Second
 	n.SessionKeyRotationInterval *= time.Second
@@ -236,6 +249,7 @@ func (n *node) server() error {
 // then copying all data between the two connections
 func (n *node) client() error {
 	var certPool *x509.CertPool
+	n.logln("swaggg")
 	if n.Cert != "" {
 		certPool = x509.NewCertPool()
 		raw, err := ioutil.ReadFile(n.Cert)
@@ -243,7 +257,11 @@ func (n *node) client() error {
 			return err
 		}
 		n.logf("adding %s to RootCAs pool", n.Cert)
-		certPool.AppendCertsFromPEM(raw)
+		ok := certPool.AppendCertsFromPEM(raw)
+		if ok == false {
+			n.logln("could not append cert to RootCAs pool")
+		}
+	n.logln("swaggg")
 	}
 	host, _, err := net.SplitHostPort(n.Connect)
 	if err != nil {

@@ -39,7 +39,7 @@ Basically the server does the exact opposite. It listens on a address for TLS TC
 
 ## Instructions
 
-The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and the path to the logFile. Each of these nodes in the array are either in server or client mode depending on the Mode field. Please take a look at the example config.json for an example
+The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and the path to the logFile. Each of these nodes in the array are either in server or client mode depending on the Mode field. Please take a look at the example config.json for an example. Otherwise here is a list of fields you can set in all the nodes.
 
 ###Fields
 
@@ -83,6 +83,7 @@ SessionKeyRotationInterval -- interval between session key rotation in seconds
 
 Cert -- Optional field in a client node for the path of the RootCA for the certificate from the server. Useful when using self signed certificates.
 
+##Configuring certificates and keys
 
 ## Example
 Lets take a look at the example configuration file to get an idea of how its configured.
