@@ -49,7 +49,8 @@ Sets node as client/server
 Name
 Name for logging
 
-#####Accept -- required
+Accept -- required
+
 Listen address; format is host:port. If host is missing, localhost is assumed
 
 #####Connect -- required
