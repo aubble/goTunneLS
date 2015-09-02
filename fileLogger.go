@@ -11,7 +11,7 @@ type fileLogger struct {
 	logFile **os.File
 }
 
-func (l fileLogger) checkIfExist(){
+func (l fileLogger) checkIfExist() {
 	if _, err := os.Stat(l.logPath); err != nil {
 		if os.IsNotExist(err) {
 			logFile, err := os.OpenFile(l.logPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)

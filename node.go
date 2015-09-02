@@ -270,7 +270,7 @@ func (n *node) listenAndServe() {
 				go n.copy(c1, c2)
 				go n.copy(c2, c1)
 				n.copyWG.Wait()
-				n.logf("closed tunnel from %s to %s then %s to %s", c1.RemoteAddr(),  c1.LocalAddr(),  c2.LocalAddr(),  c2.RemoteAddr())
+				n.logf("closed tunnel from %s to %s then %s to %s", c1.RemoteAddr(), c1.LocalAddr(), c2.LocalAddr(), c2.RemoteAddr())
 			}(c1)
 		}
 	}
@@ -297,6 +297,6 @@ func (n *node) logln(v ...interface{}) {
 
 func (n *node) logf(format string, v ...interface{}) {
 	if logger.Logger != nil {
-		logger.printf("--> " + n.Mode + " " + n.Name + " -/ " + format, v...)
+		logger.printf("--> "+n.Mode+" "+n.Name+" -/ "+format, v...)
 	}
 }
