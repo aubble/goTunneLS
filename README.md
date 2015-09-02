@@ -43,7 +43,7 @@ The configuration file's syntax is JSON and it consists of an array of the nodes
 
 ###Options
 
-Mode -- required always
+**Mode -- required always**
 Sets node as client/server
 
 Name
