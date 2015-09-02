@@ -9,7 +9,8 @@ TLS wrapper in go! Wrap existing connections in TLS to bypass annoying DPI (deep
 
 ## How it works
 
- --- represents the plain data, ## represented TLS encrypted data
+ --- represents plain data 
+ ### represents TLS encrypted data
 
 ### Normal connections
 
