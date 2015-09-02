@@ -13,6 +13,7 @@ import (
 	"golang.org/x/crypto/ocsp"
 )
 
+// OCSPCert represents a tls.Certificate that has its OCSPStaple field updated
 type OCSPCert struct {
 	cert       *tls.Certificate
 	req        []byte
@@ -22,6 +23,7 @@ type OCSPCert struct {
 	n *node
 }
 
+// updateStaple concurrently updates the OCSP staple of OCSPC.cert
 func (OCSPC *OCSPCert) updateStaple() error {
 	OCSPC.n.logln("sending request to OCSP servers", OCSPC.cert.Leaf.OCSPServer)
 	var resp *http.Response
@@ -65,6 +67,9 @@ func (OCSPC *OCSPCert) updateStaple() error {
 	return nil
 }
 
+// forever loops updating the OCSP staple of OCSPC.cert
+// after every update sleeps until next update or the
+// OCSP staple interval configured in the node
 func (OCSPC *OCSPCert) updateStapleLoop() {
 	for {
 		if err := OCSPC.updateStaple(); err == nil {

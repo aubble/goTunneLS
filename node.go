@@ -16,33 +16,61 @@ import (
 	"golang.org/x/crypto/ocsp"
 )
 
-// node represents the proxy for goTunneLS
-// can be in server or client mode
-// server mode listens on the Accept address for tls
-// connections to tunnel to the Connect address with plain tcp
-// client mode listens on the Accept address for plain tcp
-// connections to tunnel to the Connect address with tls
+// node implements one end of a goTunneLS tunnel
 type node struct {
-	Name                       string                       // name for logging
-	Mode                       string                       // tunnel mode
-	Accept                     string                       // listen address
-	Connect                    string                       // connect address
-	Cert                       string                       // path to cert
-	Key                        string                       // path to key
-	Issuer                     string                       // issuer for OCSP
-	TLSConfig                  *tls.Config                  // tls configuration
-	Timeout                    time.Duration                // timeout for sleep after network error in seconds
-	OCSPInterval               time.Duration                // interval between OCSP updates when OCSP responder nextupdate is nil, otherwise wait till next update
-	SessionKeyRotationInterval time.Duration                // log
-	TCPKeepAliveInterval       time.Duration                // tcp keep alive interval
-	copyWG                     sync.WaitGroup               // waitgroup for the copy goroutines, to log in sync after they exit
-	listen                     func() (net.Listener, error) // listen on accept function
-	dial                       func() (net.Conn, error)     // dial on connect function
-	nodeWG                     sync.WaitGroup
+	// name for logging
+	Name string
+
+	// node mode
+	Mode string
+
+	// listen address
+	Accept string
+
+	// dial address
+	Connect string
+
+	// TODO multiple certs and SNI
+	// TODO also look at SignedCertificateTimestamps
+	// path to cert
+	Cert string
+
+	// path to key
+	Key string
+
+	// path to issuer of cert for OCSP
+	Issuer string
+
+	// tls configuration
+	TLSConfig *tls.Config
+
+	// timeout for sleep after network error in seconds
+	Timeout time.Duration
+
+	// interval between OCSP staple updates in seconds. only applies when OCSP responder has most up to date information, otherwise the interval is until the next update
+	OCSPInterval time.Duration
+
+	// interval between session ticket key rotations in seconds
+	SessionKeyRotationInterval time.Duration
+
+	// tcp keep alive interval in seconds
+	TCPKeepAliveInterval time.Duration
+
+	// wg for the copy goroutines, to write logs in sync after they exit
+	copyWG sync.WaitGroup
+
+	// listen on Accept address
+	listen func() (net.Listener, error)
+
+	// dials the Connect address
+	dial func() (net.Conn, error)
+
+	// wg for the main function
+	nodeWG sync.WaitGroup
 }
 
-// extract data from the array of paths to certs/keys/keypairs
-// then start the node in server/client mode with the data
+// initialize and then run the node according to its mode
+// also set some mutual TLSConfig parameters
 func (n *node) run() {
 	n.logln("initializing")
 	defer n.nodeWG.Done()
@@ -54,10 +82,12 @@ func (n *node) run() {
 	if !strings.Contains(n.Connect, ":") {
 		n.Connect = ":" + n.Connect
 	}
+	// fix timeout fields
 	n.Timeout *= time.Second
 	n.OCSPInterval *= time.Second
 	n.SessionKeyRotationInterval *= time.Second
 	n.TCPKeepAliveInterval *= time.Second
+	// set mutual TLSConfig fields
 	n.TLSConfig = new(tls.Config)
 	n.TLSConfig.CipherSuites = []uint16{
 		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
@@ -83,6 +113,8 @@ func (n *node) run() {
 	}
 }
 
+// tcpKeepAliveListener wraps a TCPListener to
+// activate TCP keep alive on every accepted connection
 type tcpKeepAliveListener struct {
 	*net.TCPListener
 	tcpKeepAliveInterval time.Duration
@@ -104,7 +136,9 @@ func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
 	return tc, nil
 }
 
-// run node as server
+// run the node as a server
+// accept TLS TCP and dial plain TCP
+// then copying all data between the two connections
 func (n *node) server() error {
 	n.logf("loading cert %s and key %s", n.Cert, n.Key)
 	cert, err := tls.LoadX509KeyPair(n.Cert, n.Key)
@@ -201,7 +235,9 @@ func (n *node) server() error {
 	return nil
 }
 
-// run node as client
+// runs the node as a client
+// accept plain TCP and dial TLS TCP
+// then copying all data between the two connections
 func (n *node) client() error {
 	var certPool *x509.CertPool
 	if n.Cert != "" {
@@ -237,7 +273,12 @@ func (n *node) client() error {
 	return nil
 }
 
-//TODO the go way with an interface as arguemen
+// listenAndServe accepts connections on n.Accept
+// it then dials n.Connect and copies all data between the two
+// connections.
+//
+// listening is done with the n.Listen function and dialing is done with the
+// n.Dial function
 func (n *node) listenAndServe() {
 	handleError := func(err error) {
 		n.logln(err)
@@ -280,21 +321,27 @@ func (n *node) listenAndServe() {
 	}
 }
 
-// copy all data from src to dst
+// copy copies all data from src to dst
+// then calls Done() on the copyWG to allow
+// the calling routine to stop waiting followed by closing dst
 func (n *node) copy(dst io.WriteCloser, src io.Reader) {
+	defer dst.Close()
 	if _, err := io.Copy(dst, src); err != nil {
 		n.logln(err)
 	}
 	n.copyWG.Done()
-	dst.Close()
 }
 
+// logln logs to the global fileLogger as global
+// arguements are handled same as fmt.Println
 func (n *node) logln(v ...interface{}) {
 	if logger.Logger != nil {
 		logger.println(append([]interface{}{"-->", n.Mode, n.Name, "-/"}, v...)...)
 	}
 }
 
+// logf logs to the global fileLogger as global
+// arguements are handled same as fmt.Printf
 func (n *node) logf(format string, v ...interface{}) {
 	if logger.Logger != nil {
 		logger.printf("--> "+n.Mode+" "+n.Name+" -/ "+format, v...)

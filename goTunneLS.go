@@ -6,12 +6,15 @@ import (
 	"log"
 )
 
+// goTunneLS represents the the settings for the nodes and the logFile
 type goTunneLS struct {
-	Nodes   []*node // slice of nodes to run
-	LogPath string  // path to logfile, use /dev/stdout for standard output and /dev/stderr for standard error
+	// slice of the configured nodes to launch
+	Nodes []*node
+	// path to the logFile, use /dev/stdout for standard output and /dev/stderr for standard error
+	LogPath string
 }
 
-// read json file into gTLS
+// read config file into gTLS
 func (gTLS *goTunneLS) parseFile(path string) {
 	raw, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -22,12 +25,16 @@ func (gTLS *goTunneLS) parseFile(path string) {
 	}
 }
 
+// logln logs to the global fileLogger as global
+// arguements are handled same as fmt.Println
 func (gTLS *goTunneLS) logln(v ...interface{}) {
 	if logger.Logger != nil {
 		logger.println(append([]interface{}{"--> global -/"}, v...)...)
 	}
 }
 
+// logf logs to the global fileLogger as global
+// arguements are handled same as fmt.Printf
 func (gTLS *goTunneLS) logf(format string, v ...interface{}) {
 	if logger.Logger != nil {
 		logger.printf("--> global -/ "+format, v...)

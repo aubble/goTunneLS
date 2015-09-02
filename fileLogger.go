@@ -5,12 +5,20 @@ import (
 	"os"
 )
 
+// fileLogger represents a logger that logs to a file
 type fileLogger struct {
+	// pointer to internal logger
 	*log.Logger
+
+	// path to logFile
 	logPath string
+
+	// pointer to pointer of the log file
 	logFile **os.File
 }
 
+// checks if the file exists
+// if it doesn't, create the file
 func (l fileLogger) checkIfExist() {
 	if _, err := os.Stat(l.logPath); err != nil {
 		if os.IsNotExist(err) {
@@ -26,16 +34,21 @@ func (l fileLogger) checkIfExist() {
 	}
 }
 
+// first checks to make sure file exists
+// then prints arguements as fmt.Println
 func (l fileLogger) println(v ...interface{}) {
 	l.checkIfExist()
 	l.Println(v...)
 }
 
+// first checks to make sure file exists
+// then prints arguements as fmt.Printf
 func (l fileLogger) printf(format string, v ...interface{}) {
 	l.checkIfExist()
 	l.Printf(format, v...)
 }
 
+// closes the logFile associated with the logger
 func (l fileLogger) close() {
 	(*l.logFile).Close()
 }

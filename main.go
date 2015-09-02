@@ -10,11 +10,16 @@ import (
 	"syscall"
 )
 
-//global logger for the log file
+// logger is the global fileLogger
 var logger fileLogger
 
+// main does initialization and launches all the nodes
+// first it reads the config file into a goTunneLS struct
+// next if a LogPath is provided it sets up logging
+// finally it launches all the nodes and waits for them to end
 func main() {
 	log.SetPrefix("goTunneLS: ")
+	// read and parse config file
 	var path string
 	flag.StringVar(&path, "c", "/etc/goTunneLS/config.json", "path to configuration file")
 	flag.Parse()
@@ -26,6 +31,7 @@ func main() {
 			log.Fatalln("--> global -/", err)
 		}
 	}
+	// setup logging
 	if gTLS.LogPath != "" {
 		logger.logPath = gTLS.LogPath
 		logFile, err := os.OpenFile(gTLS.LogPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
@@ -45,6 +51,7 @@ func main() {
 			os.Exit(1)
 		}()
 	}
+	// launch nodes and wait for their return
 	var nodeWG sync.WaitGroup
 	nodeWG.Add(len(gTLS.Nodes))
 	for _, n := range gTLS.Nodes {
