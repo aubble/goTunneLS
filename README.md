@@ -9,7 +9,7 @@ TLS wrapper in go! Wrap existing connections in TLS to bypass annoying DPI (deep
 
 ## How it works
 
- * --- represents plain data 
+ * +++ represents plain data 
  
  * \#\#\# represents TLS encrypted data
 
@@ -21,7 +21,7 @@ The link between the client and server is either insecure or it uses say SSH as 
 
 ### GoTunneLS connections
 
-**client &nbsp; ---> &nbsp; gTLS client &nbsp; ###> &nbsp; gTLS server &nbsp; ---> &nbsp; server**
+**client &nbsp; +++---> &nbsp; gTLS client &nbsp; ###--> &nbsp; gTLS server &nbsp; +++---> &nbsp; server**
 
 Now the difference is that whatever the client sends to the gTLS client is forwarded over to the gTLS server and then finally over to the server and vice-versa. The advantage here is that the gTLS client and gTLS server communicate via TLS thus protecting the data if the client/server communicate insecurely and also likely bypassing any DPI as TLS is almost never blocked.
 
