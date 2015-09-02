@@ -33,7 +33,7 @@ func (l fileLogger) println(v ...interface{}) {
 
 func (l fileLogger) printf(format string, v ...interface{}) {
 	l.checkIfExist()
-	l.printf(format, v...)
+	l.Printf(format, v...)
 }
 
 func (l fileLogger) close() {

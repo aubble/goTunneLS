@@ -30,6 +30,6 @@ func (gTLS *goTunneLS) logln(v ...interface{}) {
 
 func (gTLS *goTunneLS) logf(format string, v ...interface{}) {
 	if logger.Logger != nil {
-		logger.printf("--> global -/", v...)
+		logger.printf("--> global -/ " + format, v...)
 	}
 }

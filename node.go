@@ -106,7 +106,7 @@ func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
 
 // run node as server
 func (n *node) server() error {
-	n.logln("loading cert %s and key %s", n.Cert, n.Key)
+	n.logf("loading cert %s and key %s", n.Cert, n.Key)
 	cert, err := tls.LoadX509KeyPair(n.Cert, n.Key)
 	if err != nil {
 		return err
@@ -210,7 +210,7 @@ func (n *node) client() error {
 		if err != nil {
 			return err
 		}
-		n.logln("adding %s to RootCAs pool", n.Cert)
+		n.logf("adding %s to RootCAs pool", n.Cert)
 		certPool.AppendCertsFromPEM(raw)
 	}
 	host, _, err := net.SplitHostPort(n.Connect)
