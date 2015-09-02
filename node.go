@@ -38,7 +38,6 @@ type node struct {
 	copyWG                     sync.WaitGroup               // waitgroup for the copy goroutines, to log in sync after they exit
 	listen                     func() (net.Listener, error) // listen on accept function
 	dial                       func() (net.Conn, error)     // dial on connect function
-	logInterface               chan []interface{}           // logging channel
 	nodeWG                     sync.WaitGroup
 }
 
@@ -242,7 +241,7 @@ func (n *node) client() error {
 func (n *node) listenAndServe() {
 	handleError := func(err error) {
 		n.log(err)
-		n.log("sleeping for", int64(n.Timeout))
+		n.log("sleeping for", int64(n.Timeout/time.Second))
 		time.Sleep(n.Timeout)
 	}
 	listenAndServeErr := func() error {
@@ -292,7 +291,7 @@ func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 
 // append node info to arguments and send to logging channel
 func (n *node) log(v ...interface{}) {
-	if n.logInterface != nil {
-		n.logInterface <- append([]interface{}{"-->", n.Mode + n.Name + " -/"}, v...)
+	if logger.Logger != nil {
+		logger.println(append([]interface{}{"-->", n.Mode + n.Name + " -/"}, v...)...)
 	}
 }
