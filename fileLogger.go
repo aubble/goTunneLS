@@ -11,7 +11,7 @@ type fileLogger struct {
 	logFile **os.File
 }
 
-func (l fileLogger) println(v ...interface{}) {
+func (l fileLogger) checkIfExist(){
 	if _, err := os.Stat(l.logPath); err != nil {
 		if os.IsNotExist(err) {
 			logFile, err := os.OpenFile(l.logPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
@@ -24,7 +24,16 @@ func (l fileLogger) println(v ...interface{}) {
 			log.Fatalln("--> global -/", err)
 		}
 	}
+}
+
+func (l fileLogger) println(v ...interface{}) {
+	l.checkIfExist()
 	l.Println(v...)
+}
+
+func (l fileLogger) printf(format string, v ...interface{}) {
+	l.checkIfExist()
+	l.printf(format, v...)
 }
 
 func (l fileLogger) close() {

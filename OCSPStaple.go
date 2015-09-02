@@ -23,7 +23,7 @@ type OCSPCert struct {
 }
 
 func (OCSPC *OCSPCert) updateStaple() error {
-	OCSPC.n.log("sending request to OCSP servers", OCSPC.cert.Leaf.OCSPServer)
+	OCSPC.n.logln("sending request to OCSP servers", OCSPC.cert.Leaf.OCSPServer)
 	var resp *http.Response
 	for i := 0; i < len(OCSPC.cert.Leaf.OCSPServer); i++ {
 		req, err := http.NewRequest("GET", OCSPC.cert.Leaf.OCSPServer[i]+"/"+base64.StdEncoding.EncodeToString(OCSPC.req), nil)
@@ -36,39 +36,39 @@ func (OCSPC *OCSPCert) updateStaple() error {
 		if err == nil {
 			break
 		}
-		OCSPC.n.log(err)
+		OCSPC.n.logln(err)
 		if i+1 == len(OCSPC.cert.Leaf.OCSPServer) {
 			return errors.New("could not request OCSP servers")
 		}
 	}
-	OCSPC.n.log("reading response")
+	OCSPC.n.logln("reading response")
 	OCSPStaple, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
 		return err
 	}
-	OCSPC.n.log("parsing response")
+	OCSPC.n.logln("parsing response")
 	OCSPResp, err := ocsp.ParseResponse(OCSPStaple, OCSPC.issuer)
 	if err != nil {
 		return err
 	}
-	if OCSPResp.NextUpdate.IsZero() { //TODO check if this works
+	if OCSPResp.NextUpdate.IsZero() {
 		OCSPC.nextUpdate = time.Now().Add(OCSPC.n.OCSPInterval)
 	} else {
 		OCSPC.nextUpdate = OCSPResp.NextUpdate
 	}
-	OCSPC.n.log("updating OCSP staple")
+	OCSPC.n.logln("updating OCSP staple")
 	OCSPC.Lock()
 	OCSPC.cert.OCSPStaple = OCSPStaple
 	OCSPC.Unlock()
-	OCSPC.n.log("next OCSP staple at", OCSPC.nextUpdate)
+	OCSPC.n.logln("next OCSP staple at", OCSPC.nextUpdate)
 	return nil
 }
 
 func (OCSPC *OCSPCert) updateStapleLoop() {
 	for {
 		if err := OCSPC.updateStaple(); err == nil {
-			OCSPC.n.log("stapleLoop: sleeping for", OCSPC.nextUpdate.Sub(time.Now()).Seconds())
+			OCSPC.n.logln("stapleLoop: sleeping for", OCSPC.nextUpdate.Sub(time.Now()).Seconds())
 			time.Sleep(OCSPC.nextUpdate.Sub(time.Now()))
 		} else {
 			if time.Now().After(OCSPC.nextUpdate) {
@@ -76,8 +76,8 @@ func (OCSPC *OCSPCert) updateStapleLoop() {
 				OCSPC.cert.OCSPStaple = nil
 				OCSPC.Unlock()
 			}
-			OCSPC.n.log(err)
-			OCSPC.n.log("stapleLoop: sleeping for", int64(OCSPC.n.Timeout))
+			OCSPC.n.logln(err)
+			OCSPC.n.logln("stapleLoop: sleeping for", int64(OCSPC.n.Timeout))
 			time.Sleep(OCSPC.n.Timeout)
 		}
 	}

@@ -22,8 +22,14 @@ func (gTLS *goTunneLS) parseFile(path string) {
 	}
 }
 
-func (gTLS *goTunneLS) log(v ...interface{}) {
+func (gTLS *goTunneLS) logln(v ...interface{}) {
 	if logger.Logger != nil {
 		logger.println(append([]interface{}{"--> global -/"}, v...)...)
+	}
+}
+
+func (gTLS *goTunneLS) logf(format string, v ...interface{}) {
+	if logger.Logger != nil {
+		logger.printf("--> global -/", v...)
 	}
 }

@@ -11,7 +11,6 @@ import (
 //global logger for the log file
 var logger fileLogger
 
-//
 func main() {
 	log.SetPrefix("goTunneLS: ")
 	gTLS := new(goTunneLS)
@@ -29,11 +28,11 @@ func main() {
 		logger.logFile = &logFile
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-		gTLS.log("beginning logging")
+		gTLS.logln("beginning logging")
 		go func() {
 			sig := <-sigs
-			gTLS.log("got signal", sig)
-			gTLS.log("now exiting")
+			gTLS.logln("got signal", sig)
+			gTLS.logln("now exiting")
 			logger.close()
 			os.Exit(1)
 		}()
@@ -41,13 +40,9 @@ func main() {
 	var nodeWG sync.WaitGroup
 	nodeWG.Add(len(gTLS.Nodes))
 	for _, n := range gTLS.Nodes {
-		gTLS.log("initalizing", n.Mode, "node", n.Name)
-		// prepend space to name in named nodes to separate mode in logging
-		if n.Name != "" {
-			n.Name = " " + n.Name
-		}
+		gTLS.logf("initalizing %s node %s", n.Mode, n.Name)
 		n.nodeWG = nodeWG
-		gTLS.log("starting", n.Mode, "node"+n.Name)
+		gTLS.logf("starting %s node %s", n.Mode, n.Name)
 		go n.run()
 	}
 	nodeWG.Wait()

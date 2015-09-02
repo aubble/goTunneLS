@@ -44,9 +44,9 @@ type node struct {
 // extract data from the array of paths to certs/keys/keypairs
 // then start the node in server/client mode with the data
 func (n *node) run() {
-	n.log("initializing")
+	n.logln("initializing")
 	defer n.nodeWG.Done()
-	defer n.log("exiting")
+	defer n.logln("exiting")
 	// you can use 5000 as a port instead of :5000
 	if !strings.Contains(n.Accept, ":") {
 		n.Accept = ":" + n.Accept
@@ -75,11 +75,11 @@ func (n *node) run() {
 	n.TLSConfig.NextProtos = []string{"http/1.1"}
 	switch strings.ToLower(n.Mode) {
 	case "server":
-		n.log(n.server())
+		n.logln(n.server())
 	case "client":
-		n.log(n.client())
+		n.logln(n.client())
 	default:
-		n.log("no valid mode")
+		n.logln("no valid mode")
 	}
 }
 
@@ -106,7 +106,7 @@ func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
 
 // run node as server
 func (n *node) server() error {
-	n.log("loading cert", n.Cert, "and key", n.Key)
+	n.logln("loading cert %s and key %s", n.Cert, n.Key)
 	cert, err := tls.LoadX509KeyPair(n.Cert, n.Key)
 	if err != nil {
 		return err
@@ -115,10 +115,10 @@ func (n *node) server() error {
 		return err
 	}
 	if cert.Leaf.OCSPServer != nil {
-		n.log("OCSP servers found", cert.Leaf.OCSPServer)
-		n.log("initalizing OCSP stapling")
+		n.logln("OCSP servers found", cert.Leaf.OCSPServer)
+		n.logln("initalizing OCSP stapling")
 		OCSPC := OCSPCert{n: n, cert: &cert}
-		n.log("reading issuer", n.Issuer)
+		n.logln("reading issuer", n.Issuer)
 		issuerRAW, err := ioutil.ReadFile(n.Issuer)
 		if err != nil {
 			return err
@@ -139,12 +139,12 @@ func (n *node) server() error {
 		if OCSPC.issuer == nil {
 			return errors.New("no issuer")
 		}
-		n.log("creating the OCSP request")
+		n.logln("creating the OCSP request")
 		OCSPC.req, err = ocsp.CreateRequest(OCSPC.cert.Leaf, OCSPC.issuer, nil)
 		if err != nil {
 			return err
 		}
-		n.log("starting stapleLoop")
+		n.logln("starting stapleLoop")
 		go OCSPC.updateStapleLoop()
 		n.TLSConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 			OCSPC.RLock()
@@ -159,11 +159,11 @@ func (n *node) server() error {
 	n.TLSConfig.PreferServerCipherSuites = true
 	updateKey := func(key *[32]byte) {
 		if _, err := rand.Read((*key)[:]); err != nil {
-			n.log(err)
-			n.log("cannot create new session ticket key")
+			n.logln(err)
+			n.logln("cannot create new session ticket key")
 		}
 	}
-	n.log("initializing session ticket key rotation")
+	n.logln("initializing session ticket key rotation")
 	keys := make([][32]byte, 3)
 	updateKey(&keys[0])
 	updateKey(&keys[1])
@@ -172,7 +172,7 @@ func (n *node) server() error {
 		for {
 			n.TLSConfig.SetSessionTicketKeys(keys)
 			time.Sleep(n.SessionKeyRotationInterval)
-			n.log("updating session ticket rotation keys")
+			n.logln("updating session ticket rotation keys")
 			keys[0] = keys[1]
 			keys[1] = keys[2]
 			updateKey(&keys[2])
@@ -210,7 +210,7 @@ func (n *node) client() error {
 		if err != nil {
 			return err
 		}
-		n.log("adding", n.Cert, "to pool")
+		n.logln("adding %s to RootCAs pool", n.Cert)
 		certPool.AppendCertsFromPEM(raw)
 	}
 	host, _, err := net.SplitHostPort(n.Connect)
@@ -240,8 +240,8 @@ func (n *node) client() error {
 //TODO the go way with an interface as arguemen
 func (n *node) listenAndServe() {
 	handleError := func(err error) {
-		n.log(err)
-		n.log("sleeping for", int64(n.Timeout/time.Second))
+		n.logln(err)
+		n.logln("sleeping for", int64(n.Timeout/time.Second))
 		time.Sleep(n.Timeout)
 	}
 	listenAndServeErr := func() error {
@@ -250,27 +250,27 @@ func (n *node) listenAndServe() {
 			return err
 		}
 		defer ln.Close()
-		n.log("listening on", n.Accept)
+		n.logln("listening on", n.Accept)
 		for {
 			c1, err := ln.Accept()
 			if err != nil {
 				return err
 			}
-			n.log("connection from", c1.RemoteAddr())
+			n.logln("connection from", c1.RemoteAddr())
 			go func(c1 net.Conn) {
-				n.log("connecting to", n.Connect)
+				n.logln("connecting to", n.Connect)
 				c2, err := n.dial()
 				if err != nil {
-					n.log(err)
+					n.logln(err)
 					c1.Close()
 					return
 				}
-				n.log("beginning tunnel from", c1.RemoteAddr(), "to", c1.LocalAddr(), "to", c2.LocalAddr(), "to", c2.RemoteAddr())
+				n.logf("beginning tunnel from %s to %s then %s to %s", c1.RemoteAddr(), c1.LocalAddr(), c2.LocalAddr(), c2.RemoteAddr())
 				n.copyWG.Add(2)
 				go n.copy(c1, c2)
 				go n.copy(c2, c1)
 				n.copyWG.Wait()
-				n.log("closed tunnel from", c1.RemoteAddr(), "to", c1.LocalAddr(), "to", c2.LocalAddr(), "to", c2.RemoteAddr())
+				n.logf("closed tunnel from %s to %s then %s to %s", c1.RemoteAddr(),  c1.LocalAddr(),  c2.LocalAddr(),  c2.RemoteAddr())
 			}(c1)
 		}
 	}
@@ -283,15 +283,20 @@ func (n *node) listenAndServe() {
 // copy all data from src to dst
 func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 	if _, err := io.Copy(dst, src); err != nil {
-		n.log(err)
+		n.logln(err)
 	}
 	n.copyWG.Done()
 	dst.Close()
 }
 
-// append node info to arguments and send to logging channel
-func (n *node) log(v ...interface{}) {
+func (n *node) logln(v ...interface{}) {
 	if logger.Logger != nil {
-		logger.println(append([]interface{}{"-->", n.Mode + n.Name + " -/"}, v...)...)
+		logger.println(append([]interface{}{"-->", n.Mode, n.Name, "-/"}, v...)...)
+	}
+}
+
+func (n *node) logf(format string, v ...interface{}) {
+	if logger.Logger != nil {
+		logger.printf("--> " + n.Mode + " " + n.Name + " -/ " + format, v...)
 	}
 }
