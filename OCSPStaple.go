@@ -13,7 +13,7 @@ import (
 	"golang.org/x/crypto/ocsp"
 )
 
-// OCSPCert represents a tls.Certificate that has its OCSPStaple field updated
+// OCSPCert represents a tls.Certificate that has its OCSPStaple field constantly updated
 type OCSPCert struct {
 	cert       *tls.Certificate
 	req        []byte
@@ -86,4 +86,10 @@ func (OCSPC *OCSPCert) updateStapleLoop() {
 			time.Sleep(OCSPC.n.Timeout)
 		}
 	}
+}
+
+func (OCSPC *OCSPCert) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	OCSPC.RLock()
+	defer OCSPC.RUnlock()
+	return OCSPC.cert, nil
 }

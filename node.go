@@ -180,11 +180,7 @@ func (n *node) server() error {
 		}
 		n.logln("starting stapleLoop")
 		go OCSPC.updateStapleLoop()
-		n.TLSConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-			OCSPC.RLock()
-			defer OCSPC.RUnlock()
-			return OCSPC.cert, nil
-		}
+		n.TLSConfig.GetCertificate = OCSPC.getCertificate
 		//	} else {
 		//		TLSConfig.Certificates = []tls.Certificate{cert}
 		//TODO FIX THIS BUG
