@@ -16,5 +16,5 @@
 			"Cert": "tls/cert.pem"
 		}
 	],
-	"LogPath": "/Users/nhooyr/Desktop/logs"
+	"LogPath": "/dev/stdout"
 }

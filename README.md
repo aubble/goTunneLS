@@ -18,27 +18,27 @@ TLS wrapper in go! Wrap existing connections in TLS to bypass annoying DPI (deep
 
 **client &nbsp; ---> &nbsp; server**
 
-The link between the client and server is either insecure or it uses say SSH as the protocol which is picked up by DPI and thus blocked. You can tunnel it instead through a goTunneLS tunnel which is encrypted via TLS, which makes it much less likely to be blocked by DPI as the entire web uses TLS.
+The link between the client and server is either insecure or it uses say SSH as the protocol which is picked up by Deep Packet Filtering and thus blocked. You can tunnel it instead through a goTunneLS tunnel which is encrypted via TLS, which makes it much less likely to be blocked by DPI as the entire web uses TLS, its far too restrictive for most networks and you should be able to get through!
 
 ### goTunneLS connections
 
-**client &nbsp; +++---> &nbsp; gTLS client &nbsp; ###--> &nbsp; gTLS server &nbsp; +++---> &nbsp; server**
+**real client &nbsp; +++---> &nbsp; gTLS client &nbsp; ###--> &nbsp; gTLS server &nbsp; +++---> &nbsp; real server**
 
-Now the difference is that whatever the client sends to the gTLS client is forwarded over to the gTLS server and then finally over to the server and vice-versa. The advantage here is that the gTLS client and gTLS server communicate via TLS thus protecting the data if the client/server communicate insecurely and also likely bypassing any DPI as TLS is almost never blocked.
+Now the difference is that whatever the client sends to the gTLS client is forwarded over to the gTLS server and then finally over to the real server. The advantage here is that the gTLS client and gTLS server communicate via TLS thus protecting the data if the client/server communicate insecurely and also likely bypassing any DPI as TLS is almost never blocked.
 
 #### gTLS Client
 
-Basically the client listens on a address for plain TCP connections and proxies them to another address via TLS and TCP.
+Basically the client listens on it's Accept address for plain TCP connections and proxies them to its Connect address via TLS and TCP.
 
 #### gTLS Server
 
-Basically the server does the exact opposite. It listens on a address for TLS TCP connections and then proxies those over to another address via plain TCP.
+Basically the server does the exact opposite. Listens on it's Accept address for TLS TCP connections and proxies them to its Connect address via plain TCP.
 
 ## Configuration
 
 The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and the path to the logFile. Each of these nodes in the array are either in server or client mode depending on the Mode field. Please take a look at the example config.json for an example. Otherwise here is the list of fields you can set in all the nodes.
 
-note that you can use relative file paths, relative to the config file. So say the config file is in /etc/goTunneLS. if the value of Cert is "cert.pem" that really means "/etc/goTunneLS/cert.pem" as its relative to the config file. the moment goTunneLS gets the name of the config file as the arguement it changes its directory to it.
+Note that you can use relative file paths, relative to the config file. So say the config file is in /etc/goTunneLS. if the value of Cert is "cert.pem" that really means "/etc/goTunneLS/cert.pem" as its relative to the config file. the moment goTunneLS gets the name of the config file as the arguement it changes its directory to it.
 
 ###Fields
 
@@ -78,11 +78,11 @@ SessionKeyRotationInterval -- interval between session key rotation in seconds, 
 
 ####Optional Client Options
 
-Cert -- path to the RootCA for the certificate from the server. Useful when using self signed certificates (like below) that are not in the operating systems store
+Cert -- path to the RootCA for the certificate from the server. Useful when using self signed certificates (like below) that are not in the operating systems store, you must use this option to point to the RootCA in those cases or you'll get a nasty error.
 
 
 ###LogPath
-Outside of the array of nodes this is the other variable. It's the path to logFile. Created if doesn't exist, and if deleted during execution also recreated.
+Outside of the array of nodes this is the other variable. It's the path to logFile. Created if doesn't exist, and if deleted during execution also recreated. Use /dev/stdout or /dev/stderr to output to terminal when needed.
 
 ##Configuring certificates and keys
 I've already setup a openssl.cnf that should work for most people, you can of course use any certificate you want but this should make it much more streamlined for beginners. Open tls/openssl.cnf and modify the req\_distinguished\_name to fit your liking. Change the name and everything. Next choose if you want RSA or ECDSA. I recommend going for ECDSA, the keys are shorter and faster and more secure.
