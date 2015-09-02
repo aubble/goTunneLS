@@ -47,6 +47,7 @@ The configuration file's syntax is JSON and it consists of an array of the nodes
 Sets node as client/server
 
 Name
+
 Name for logging
 
 Accept -- required
