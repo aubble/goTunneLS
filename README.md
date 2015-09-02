@@ -94,25 +94,30 @@ First generate the key with
 
 	openssl ecparam -genkey -name secp384r1 -out key.pem
 
+If you want a different curve to be used on the key, first list out the curves with
+
+	openssl ecparam -list_curves
+
+select it and replace the -name portion with the curve name you want. for example if I wanted to use the prime256v1 curve
+
+	openssl ecparam -genkey -name prime256v1 -out key.pem
+
 Next create the cert
 
 	openssl req -new -x509 -config openssl.cnf -key key.pem -nodes -out cert.pem
 
 There you go, you're done :) 
 
-If you want a different curve to be used on the key, first list out the curves with
-
-	openssl ecparam -list_curves
-
-select it and replace the -name portion with the curve name you want. Generate the key and then generate the cert and there you go! for example the less expensive but also less secure (though secure enough) curve is prime256v1.
-
 ####RSA
-You can also edit the default\_bits option if you don't want a RSA key size of 4096 bt instead 2048. cd into the tls directory and run
+You can edit the default\_bits field in the openssl.cnf if you don't want a RSA key size of 4096 but maybe instead 2048. 
+
+Once you are ready cd into the tls directory and run
 
 	openssl req -new -x509 -config openssl.cnf -nodes -out cert.pem
 
 That command will generate a self signed certificate and key for you in the directory to use with goTunneLS. Make sure you changed the CN in openssl.cnf to match the domain name of your server and you're good to go! 
 
+---
 
 Now whenever you set the client config, make sure cert points to this certificate generated and when setting up the server config make sure cert and key point to their respective generated files here.
 
