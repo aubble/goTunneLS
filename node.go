@@ -61,6 +61,7 @@ func (n *node) run() {
 	n.OCSPInterval *= time.Second
 	n.SessionKeyRotationInterval *= time.Second
 	n.TCPKeepAliveInterval *= time.Second
+	n.TLSConfig = new(tls.Config)
 	n.TLSConfig.CipherSuites = []uint16{
 		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
@@ -309,6 +310,7 @@ func (n *node) client() error {
 	return nil
 }
 
+//TODO the go way with an interface as arguemen
 func (n *node) listenAndServe() {
 	handleError := func(err error) {
 		n.log(err)
