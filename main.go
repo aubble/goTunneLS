@@ -3,7 +3,9 @@ package main
 import (
 	"log"
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 )
 
 //global logger for the log file
@@ -25,9 +27,16 @@ func main() {
 		}
 		logger.Logger = log.New(logFile, "goTunneLS: ", 3)
 		logger.logFile = &logFile
-		defer logger.close()
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 		gTLS.log("beginning logging")
-		defer gTLS.log("exiting")
+		go func() {
+			sig := <-sigs
+			gTLS.log("got signal", sig)
+			gTLS.log("now exiting")
+			logger.close()
+			os.Exit(1)
+		}()
 	}
 	var nodeWG sync.WaitGroup
 	nodeWG.Add(len(gTLS.Nodes))
@@ -42,5 +51,4 @@ func main() {
 		go n.run()
 	}
 	nodeWG.Wait()
-	gTLS.log("exiting")
 }
