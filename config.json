@@ -6,18 +6,14 @@
 			"Accept": "5001",
 			"Connect": "5000",
 			"Cert": "tls/cert.pem",
-			"Key": "tls/key.pem",
-			"Timeout": 10,
-			"TCPKeepAliveInterval": 15
+			"Key": "tls/key.pem"
 		},
 		{
 			"Name": "nc",
 			"Mode": "client",
 			"Accept": "5002",
 			"Connect": "5001",
-			"Cert": "tls/cert.pem",
-			"Timeout": 10,
-			"TCPKeepAliveInterval": 15
+			"Cert": "tls/cert.pem"
 		}
 	],
 	"LogPath": "/Users/nhooyr/Desktop/logs"

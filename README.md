@@ -39,7 +39,7 @@ Basically the server does the exact opposite. It listens on a address for TLS TC
 
 ## Instructions
 
-The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and the path to the logFile. Each of these nodes in the array are either in server or client mode depending on the Mode field. Please take a look at the example config.json for an example. Otherwise here is a list of fields you can set in all the nodes.
+The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and the path to the logFile. Each of these nodes in the array are either in server or client mode depending on the Mode field. Please take a look at the example config.json for an example. Otherwise here is the list of fields you can set in all the nodes.
 
 ###Fields
 
@@ -56,11 +56,9 @@ Connect -- dial address; format is host:port. If host is missing, localhost is a
 
 ####Optional
 
-LogPath -- path to logFile (created if doesn't exist, if deleted during execution also recreated)
+Timeout -- duration to sleep in seconds after network errors, default is 15
 
-Timeout -- duration to sleep in seconds after network errors
-
-TCPKeepAliveInterval -- interval between TCP keep alives
+TCPKeepAliveInterval -- interval between TCP keep alives in seconds, default is 15
 
 
 ####Required Server Fields
@@ -74,14 +72,17 @@ Key -- path to the key file
 
 Issuer -- path to the issuer file of the cert. Only used in OCSP to validate the response.
 
-OCSPInterval -- interval between OCSP staple updates in seconds. Only applies when the OCSP responder has the most up to date information, otherwise the interval between OCSP staple updates will be until the next update.
+OCSPInterval -- interval between OCSP staple updates in seconds. Only applies when the OCSP responder has the most up to date information, otherwise the interval between OCSP staple updates will be until the next update. Default is 180
 
-SessionKeyRotationInterval -- interval between session key rotation in seconds
+SessionKeyRotationInterval -- interval between session key rotation in seconds, default is 28800 or 8 hours
 
 
 ####Optional Client Options
 
 Cert -- Optional field in a client node for the path of the RootCA for the certificate from the server. Useful when using self signed certificates.
+
+###LogPath -- path to logFile 
+created if doesn't exist, if deleted during execution also recreated
 
 ##Configuring certificates and keys
 
