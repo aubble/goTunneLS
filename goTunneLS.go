@@ -51,5 +51,7 @@ func (gTLS *goTunneLS) receiveAndLog() {
 }
 
 func (gTLS *goTunneLS) log(v ...interface{}) {
-	gTLS.logInterface <- append([]interface{}{"--> global -/"}, v...)
+	if gTLS.logInterface != nil {
+		gTLS.logInterface <- append([]interface{}{"--> global -/"}, v...)
+	}
 }

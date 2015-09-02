@@ -292,5 +292,7 @@ func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 
 // append node info to arguments and send to logging channel
 func (n *node) log(v ...interface{}) {
-	n.logInterface <- append([]interface{}{"-->", n.Mode + n.Name + " -/"}, v...)
+	if n.logInterface != nil {
+		n.logInterface <- append([]interface{}{"-->", n.Mode + n.Name + " -/"}, v...)
+	}
 }

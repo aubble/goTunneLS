@@ -11,11 +11,14 @@ import (
 // then start each node and wait until they all exit
 func main() {
 	log.SetPrefix("goTunneLS: ")
-	gTLS := &goTunneLS{logInterface: make(chan []interface{})}
+	gTLS := new(goTunneLS)
 	if err := os.Chdir("/etc/goTunneLS"); err != nil {
 		log.Fatal(err)
 	}
 	gTLS.parseFile("nodes.json")
+	if gTLS.Logfile != "" {
+		gTLS.logInterface = make(chan []interface{})
+	}
 	go gTLS.receiveAndLog()
 	var nodeWG sync.WaitGroup
 	nodeWG.Add(len(gTLS.Nodes))
