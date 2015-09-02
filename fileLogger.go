@@ -19,7 +19,7 @@ func (l fileLogger) println(v ...interface{}) {
 				log.Fatalln("--> global -/", err)
 			}
 			l.SetOutput(logFile)
-			l.logFile = &logFile
+			*l.logFile = logFile
 		} else {
 			log.Fatalln("--> global -/", err)
 		}

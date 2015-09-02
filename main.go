@@ -6,11 +6,10 @@ import (
 	"sync"
 )
 
+//global logger for the log file
 var logger fileLogger
 
-// read nodes.json file into the global variable gTLS
-// then begin logging on gTLS.log channel
-// then start each node and wait until they all exit
+//
 func main() {
 	log.SetPrefix("goTunneLS: ")
 	gTLS := new(goTunneLS)
@@ -24,9 +23,9 @@ func main() {
 		if err != nil {
 			log.Fatalln("--> global -/", err)
 		}
-		defer logger.close()
 		logger.Logger = log.New(logFile, "goTunneLS: ", 3)
 		logger.logFile = &logFile
+		defer logger.close()
 		gTLS.log("beginning logging")
 		defer gTLS.log("exiting")
 	}
