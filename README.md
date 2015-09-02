@@ -81,8 +81,8 @@ SessionKeyRotationInterval -- interval between session key rotation in seconds, 
 
 Cert -- Optional field in a client node for the path of the RootCA for the certificate from the server. Useful when using self signed certificates.
 
-###LogPath -- path to logFile 
-created if doesn't exist, if deleted during execution also recreated
+###LogPath
+Outside of the array this is the next variable. It's the path to logFile. Created if doesn't exist, and if deleted during execution also recreated.
 
 ##Configuring certificates and keys
 
