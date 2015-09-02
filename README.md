@@ -15,7 +15,7 @@ TLS wrapper in go! Wrap existing connections in TLS to bypass annoying DPI (deep
 
 ### Normal connections
 
-**client  --->  server**
+**client &nbsp; ---> &nbsp; server**
 
 The link between the client and server is either insecure or it uses say SSH as the protocol which is picked up by DPI and thus blocked. You can tunnel it instead through a goTunneLS tunnel which is encrypted via TLS, which makes it much less likely to be blocked by DPI as the entire web uses TLS.
 

@@ -1,10 +1,20 @@
 {
 	"Nodes": [
 		{
-			"Name": "ssh",
+			"Name": "nc -l",
+			"Mode": "server",
+			"Accept": "5001",
+			"Connect": "5000",
+			"Cert": "cert.pem",
+			"Timeout": 10,
+			"TCPKeepAliveInterval": 15,
+			""
+		},
+		{
+			"Name": "nc",
 			"Mode": "client",
-			"Accept": "6621",
-			"Connect": "aubble.com:443",
+			"Accept": "5002",
+			"Connect": "5001",
 			"Cert": "cert.pem",
 			"Timeout": 10,
 			"TCPKeepAliveInterval": 15
