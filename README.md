@@ -44,7 +44,7 @@ The configuration file's syntax is JSON and it consists of an array of the nodes
 
 ###Options
 
-#####Required
+####Required
 
 Mode -- sets node as client/server
 
@@ -54,14 +54,14 @@ Accept -- listen address; format is host:port. If host is missing, localhost is 
 
 Connect -- dial address; format is host:port. If host is missing, localhost is assumed
 
-#####Optional
+####Optional
 
 Timeout -- duration to sleep in seconds after network errors
 
 TCPKeepAliveInterval -- interval between TCP keep alives
 
 
-#####Server Options
+####Server Options
 
 ###
 Cert -- required; Path to the certificate file to send to client
