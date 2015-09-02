@@ -41,7 +41,6 @@ Basically the server does the exact opposite. It listens on a address for TLS TC
 
 The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and the path to the logFile. Each of these nodes in the array are either in server or client mode depending on the Mode field. Please take a look at the example config.json for an example
 
-
 ###Fields
 
 ####Required
@@ -57,6 +56,8 @@ Connect -- dial address; format is host:port. If host is missing, localhost is a
 
 ####Optional
 
+LogPath -- path to logFile (created if doesn't exist, if deleted during execution also recreated)
+
 Timeout -- duration to sleep in seconds after network errors
 
 TCPKeepAliveInterval -- interval between TCP keep alives
@@ -68,24 +69,21 @@ Cert -- path to the certificate file to send to client
 
 Key -- path to the key file 
 
+
 ####Optional Server fields
 
-Issuer -- Path to the issuer file of the cert. Only used in OCSP to validate the response.
+Issuer -- path to the issuer file of the cert. Only used in OCSP to validate the response.
 
-OCSPInterval -- Interval between OCSP staple updates in seconds. Only applies when the OCSP responder has the most up to date information, otherwise the interval between OCSP staple updates will be until the next update.
+OCSPInterval -- interval between OCSP staple updates in seconds. Only applies when the OCSP responder has the most up to date information, otherwise the interval between OCSP staple updates will be until the next update.
 
-#####SessionKeyRotationInterval 
-Interval between session key rotation in seconds
+SessionKeyRotationInterval -- interval between session key rotation in seconds
 
 
-####Client Options
+####Optional Client Options
 
-#####Cert
+Cert
 Optional field in a client node for the path of the RootCA for the certificate from the server.
 Useful when using self signed certificates.
-
-####LogPath
-Path to the log file
 
 
 ## Example
@@ -111,6 +109,8 @@ In that configuration file there are two goTunneLS "nodes" defined, 1 server and
 Hopefully it makes more sense now to you. nc does everything over plain text and goTunneLS allows you to wrap its insecure connection in TLS. You can take out the server node of the config.json, and take it and actually run it on a server somewhere, just change the Connect address of the client node to the Server's listening address and everything will work the same. You just tunneled nc through TLS!
 
 Now that you understand how it works, also know that its pure TLS, know that no other protocol is being used other than TLS to tunnel so its not necessary to use both the server and client. If a application communicates via TLS but the other does not, you only need to wrap insecure one.
+In that configuration file there are two goTunneLS "nodes" defined, 1 server and 1 client. The client listens on port 5002 and proxies to port 5001 which is where the server is listening. The server then proxies the data to port 5000 which is where nc -l is listening.
+
 
 ## Contribute
 
