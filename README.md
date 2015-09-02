@@ -37,7 +37,7 @@ Basically the client listens on a address for plain TCP connections and proxies 
 
 Basically the server does the exact opposite. It listens on a address for TLS TCP connections and then proxies those over to another address via plain TCP.
 
-## Instructions
+## Configuration
 
 The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and the path to the logFile. Each of these nodes in the array are either in server or client mode depending on the Mode field. Please take a look at the example config.json for an example. Otherwise here is the list of fields you can set in all the nodes.
 
@@ -79,16 +79,49 @@ SessionKeyRotationInterval -- interval between session key rotation in seconds, 
 
 ####Optional Client Options
 
-Cert -- Optional field in a client node for the path of the RootCA for the certificate from the server. Useful when using self signed certificates.
+Cert -- Optional field in the client node for the path of the RootCA for the certificate from the server. Useful when using self signed certificates (like below)
+
 
 ###LogPath
-Outside of the array this is the next variable. It's the path to logFile. Created if doesn't exist, and if deleted during execution also recreated.
+Outside of the array of nodes this is the other variable. It's the path to logFile. Created if doesn't exist, and if deleted during execution also recreated.
 
 ##Configuring certificates and keys
+I've already setup a openssl.cnf that should work for most people, you can of course use any certificate you want but this should make it much more streamlined for beginners. Open tls/openssl.cnf and modify the req\_distinguished\_name to fit your liking. Change the name and everything. Next choose if you want RSA or ECDSA. I recommend going for ECDSA, the keys are shorter and faster and more secure.
+
+####ECDSA - RECOMMENDED
+Creating a ECDSA signed cert is a two step process. 
+First generate the key with
+
+	openssl ecparam -genkey -name secp384r1 -out key.pem
+
+Next create the cert
+
+	openssl req -new -x509 -config openssl.cnf -key key.pem -nodes -out cert.pem
+
+There you go, you're done :) 
+
+If you want a different curve to be used on the key, first list out the curves with
+
+	openssl ecparam -list_curves
+
+select it and replace the -name portion with the curve name you want. Generate the key and then generate the cert and there you go! for example the less expensive but also less secure (though secure enough) curve is prime256v1.
+
+####RSA
+You can also edit the default\_bits option if you don't want a RSA key size of 4096 bt instead 2048. cd into the tls directory and run
+
+	openssl req -new -x509 -config openssl.cnf -nodes -out cert.pem
+
+That command will generate a self signed certificate and key for you in the directory to use with goTunneLS. Make sure you changed the CN in openssl.cnf to match the domain name of your server and you're good to go! 
+
+
+Now whenever you set the client config, make sure cert points to this certificate generated and when setting up the server config make sure cert and key point to their respective generated files here.
+
+If you also want to use this cert with say the name localhost, example.com and www.example.com, open up openssl.cnf and uncomment subjectAltName, [ alt\_names ], DNS.1 and DNS.2 and replace COMMON.NAME with the common name (its called CN in openssl.cnf) and replace SECOND.NAME with the second name you want to use. You can also add more names with DNS.n where n is the next number. Thats it for the cert configuration!
+
 
 ## Example
 Lets take a look at the example configuration file to get an idea of how its configured.
-It not only shows off every option in both the client and server configurations, but it's also a neat little exercise. First run a goTunneLS instance with the -c flag pointing to the configuration file (the default location it looks for is /etc/goTunneLS/config.json)
+First run a goTunneLS instance with the -c flag pointing to the configuration file (the default location it looks for is /etc/goTunneLS/config.json if no -c flag is provided)
 
 	goTunneLS -c config.json
 
@@ -108,7 +141,7 @@ In that configuration file there are two goTunneLS "nodes" defined, 1 server and
 
 Hopefully it makes more sense now to you. nc does everything over plain text and goTunneLS allows you to wrap its insecure connection in TLS. You can take out the server node of the config.json, and take it and actually run it on a server somewhere, just change the Connect address of the client node to the Server's listening address and everything will work the same. You just tunneled nc through TLS!
 
-Now that you understand how it works, also know that its pure TLS, know that no other protocol is being used other than TLS to tunnel so its not necessary to use both the server and client. If a application communicates via TLS but the other does not, you only need to wrap insecure one.
+Now that you understand how it works, also know that its pure TLS, know that no other protocol is being used other than TLS to tunnel so its not necessary to use both the server and client. If a application communicates via TLS but the other does not, you only need to wrap insecure one. Also notice the certificate they both point to and use? tls/cert.pem? Its the default cert I included along with its private key.
 
 ## Contribute
 

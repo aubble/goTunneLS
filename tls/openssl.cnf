@@ -8,12 +8,17 @@ x509_extensions        = v3_ca
 encrypt_key            = no
 
 [ req_distinguished_name ]
-C                      = CA
-ST                     = MeState
-L                      = MeCity
-O                      = MeCompanyName
-CN                     = localhost
+C                      = CA 			#2 letter country code
+ST                     = MeState 		#state/province
+L                      = MeCity 		#city
+O                      = MeCompanyName  #company name
+CN                     = localhost 		#common.name, eg full name of server, etc www.example.com
 emailAddress           = info@example.com
 
-[ v3_ca]
+[ v3_ca ]
 basicConstraints       = critical, CA:true
+#subjectAltName 	   = @alt_names
+
+#[ alt_names ]
+#DNS.1 				   = COMMON.NAME
+#DNS.2 				   = SECOND.NAME
