@@ -42,7 +42,8 @@ Basically the server does the exact opposite. It listens on a address for TLS TC
 The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and the path to the logFile. Each of these nodes in the array are either in server or client mode depending on the Mode field. Please take a look at the example config.json for an example
 
 
-###Options
+###Fields
+
 ####Required
 
 Mode -- sets node as client/server
@@ -53,6 +54,7 @@ Accept -- listen address; format is host:port. If host is missing, localhost is 
 
 Connect -- dial address; format is host:port. If host is missing, localhost is assumed
 
+
 ####Optional
 
 Timeout -- duration to sleep in seconds after network errors
@@ -60,19 +62,17 @@ Timeout -- duration to sleep in seconds after network errors
 TCPKeepAliveInterval -- interval between TCP keep alives
 
 
-####Server Options
+####Required Server Fields
 
-###
-Cert -- required; Path to the certificate file to send to client
+Cert -- path to the certificate file to send to client
 
-Key -- required
-Path to the key file 
+Key -- path to the key file 
 
-#####Issuer
-Path to the issuer file of the cert. Only used in OCSP to validate the response.
+####Optional Server fields
 
-#####OCSPInterval
-Interval between OCSP staple updates in seconds. Only applies when the OCSP responder has the most up to date information, otherwise the interval between OCSP staple updates will be until the next update.
+Issuer -- Path to the issuer file of the cert. Only used in OCSP to validate the response.
+
+OCSPInterval -- Interval between OCSP staple updates in seconds. Only applies when the OCSP responder has the most up to date information, otherwise the interval between OCSP staple updates will be until the next update.
 
 #####SessionKeyRotationInterval 
 Interval between session key rotation in seconds
