@@ -2,13 +2,15 @@
 
 ## Description
 
-TLS wrapper in go! Wrap existing connections in TLS to bypass annoying DPI (deep packet filtering) from blocking your ssh connection or just protect insecure connections.
+TLS wrapper in go! Wrap existing connections in TLS to bypass annoying DPI (deep packet filtering) from blocking your ssh connection or just protect insecure connections. Go 1.5 only so make sure you have it installed and configured correctly.
 
 ## Install
 
 	go get -u github.com/aubble/goTunneLS
 
-Make sure your $GOPATH/bin is in your $PATH. Now you should be able to launch it with just
+Will install it into $GOPATH/bin. Make sure your $GOPATH/bin is in your $PATH.
+
+If so you should be able to launch it as
 
 	goTunneLS
 
