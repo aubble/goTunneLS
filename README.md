@@ -174,7 +174,7 @@ Leave that nc running and open a new terminal. Now run
 
 This makes nc dial port 5002 on localhost (the same computer its running on). You'll notice that now when you type anything, and press enter it appears on the other nc instance running in the other terminal! but wait.... the port numbers are different how could this be, how are they connected??? Thats goTunneLS doing its magic.
 
-In that configuration file there are two goTunneLS "nodes" defined, 1 server and 1 client. The client's Listen address is port 5002 and Connect is to port 5001. This means it accepts plain TCP connections on port 5002 and proxies them to port 5001 with TLS TCP. The Server's listen address is port 5001, and Connect address is port 5000. This means it accepts TLS TCP connections on port 5001 and proxies them to port 5000 with plain TCP. The server is configured with a default certificate/key I've provided. Please look at the 
+In that configuration file there are two goTunneLS "nodes" defined, 1 server and 1 client. The client's Listen address is port 5002 and Connect is to port 5001. This means it accepts plain TCP connections on port 5002 and proxies them to port 5001 with TLS TCP. The Server's listen address is port 5001, and Connect address is port 5000. This means it accepts TLS TCP connections on port 5001 and proxies them to port 5000 with plain TCP.
 
 The entire ordeal looks as follow.
 
@@ -188,6 +188,8 @@ The entire ordeal looks as follow.
 </pre>
 
 Hopefully it makes more sense now to you. nc does everything over plain text and goTunneLS allows you to wrap its insecure connection in TLS. You can take out the server node of the config.json, and take it and actually run it on a server somewhere, just change the Connect address of the client node to the new servers listening address and everything will work the same. Quite fun right? :P
+
+Note: The client and server are configured with a default certificate/key I've provided. Please look at the [Configuring Certificates and Keys](#configuring-certificates-and-keys) section to generate a new key pair.
 
 ##ITS ALIVE!
 <img src="http://i.imgur.com/1s2v4l6.png">
