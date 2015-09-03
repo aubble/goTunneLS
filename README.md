@@ -2,7 +2,7 @@
 
 ## Description
 
-TLS wrapper in go! Wrap existing connections in TLS to bypass annoying DPI (deep packet filtering) if you're say using SSH and being blocked, or to just protect your connections.
+TLS wrapper in go! Wrap existing connections in TLS to bypass annoying DPI (deep packet filtering) from blocking your ssh connection or just protect insecure connections.
 
 ## Install
 
