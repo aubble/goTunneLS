@@ -173,11 +173,19 @@ In the example section we do this, the certificate used is actually a CA certifi
 
 Don't worry about the actual math behind it, I myself have a very primitive understanding. If you understand the above, you're good enough to use this program. If you don't, please take the time to research it a bit, it'll go a long way.
 
----
+##Generating Certificates
 
-I've already setup a openssl.cnf that should setup the correct openssl options for most people, you can of course use any certificate you want but this should make it much more streamlined for beginners.
+I've already setup a openssl.cnf that should setup the correct openssl options for most people, you can of course use any certificate you want but this should make it much more streamlined for beginners. 
 
-Open tls/openssl.cnf and modify the req\_distinguished\_name to fit your liking. Change the name and everything. Next choose if you want RSA or ECDSA. I recommend going for ECDSA, the keys are shorter and faster and more secure.
+Open tls/openssl.cnf and modify the req\_distinguished\_name to fit your liking. Change the name and everything. 
+
+Just remove the -x509 option from the certificate generating command and the BasicConstraints line under v3_ca in openssl.cnf.
+
+If you also want to use this cert with say the name localhost, example.com and www.example.com, uncomment subjectAltName, [ alt\_names ], DNS.1 and DNS.2 and replace COMMON.NAME with the common name (the domain name, the CN) and replace SECOND.NAME with the second name you want to use. You can also add more names with DNS.n where n is the next number.
+
+If you won't be using multiple domain names nor generating a self signed CA cert, get rid of all their lines including the v3\_ca and x509\_extensions line
+
+Next choose whether or not you want to use ECDSA or RSA as the algorithm behind your certificate. I'd recommend ECDSA because the key sizes are smaller, its faster, and more secure. But if for some reason you want RSA, it works perfectly fine.
 
 ####ECDSA - RECOMMENDED
 Creating a ECDSA signed cert is a two step process.
@@ -212,7 +220,6 @@ That command will generate a self signed certificate and key for you in the dire
 
 Now whenever you set the client config, make sure Cert points to this generated certificate and when setting up the server config make sure Cert and Key point to their respective generated files here.
 
-If you also want to use this cert with say the name localhost, example.com and www.example.com, open up openssl.cnf and uncomment subjectAltName, [ alt\_names ], DNS.1 and DNS.2 and replace COMMON.NAME with the common name (its called CN in openssl.cnf) and replace SECOND.NAME with the second name you want to use. You can also add more names with DNS.n where n is the next number. Thats it for the cert configuration!
 
 
 ## Example
