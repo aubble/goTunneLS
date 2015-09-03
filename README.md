@@ -107,11 +107,19 @@ Cert -- path to the RootCA for the certificate from the server. Useful when usin
 ###LogPath
 Outside of the array of nodes this is the other variable. It's the path to logFile. Created if doesn't exist, and if deleted during execution also recreated. Use /dev/stdout or /dev/stderr to output to terminal when needed.
 
+The format for logging is:
+
+	goTunneLS: year/month/date hour/minute/second --> mode name -/ message
+
+When its global logging the mode is global
+
 ##Configuring Certificates and Keys
 TLS works with certificates and asymmetric cryptography. Lets first understand what that means. Skip this section if you already know how it all works and just want to get to generating the cert/key.
 
 ####Certificates?? Keys?? What does it all mean??
+Lets begin with symmetric cryptography, what you are likely used to. Symmetric cryptography both parties must know the key to decrypt/encrypt. However this is a problem on the web, you can't send the key over to the client to initiate a encrypted session. If someone is listening and they grab the key, your entire session can be very easily decrypted.
 
+This is where asymmetric cryptography comes into play. 
 
 ---
 
@@ -171,7 +179,7 @@ Leave that nc running and open a new terminal. Now run
 
 	nc localhost 5002
 
-This makes nc dial port 5002 on localhost (the same computer its running on). You'll notice that now when you type anything, and press enter it appears on the other nc instance running in the other terminal! but wait.... the port numbers are different how could this be, how are they connected??? Thats goTunneLS doing its magic.
+This makes nc dial port 5002 on localhost. Now when you type anything into the nc terminal, and press enter it appears on the other nc instance running in the other terminal! but wait.... the port numbers are different how could this be, how are they connected??? Thats goTunneLS doing its magic.
 
 In that configuration file there are two goTunneLS "nodes" defined, 1 server and 1 client. The client's Listen address is port 5002 and Connect is to port 5001. This means it accepts plain TCP connections on port 5002 and proxies them to port 5001 with TLS TCP. The Server's listen address is port 5001, and Connect address is port 5000. This means it accepts TLS TCP connections on port 5001 and proxies them to port 5000 with plain TCP.
 
@@ -187,6 +195,8 @@ The entire ordeal looks as follow.
 </pre>
 
 Hopefully it makes more sense now to you. nc does everything over plain text and goTunneLS allows you to wrap its insecure connection in TLS. You can take out the server node of the config.json, and take it and actually run it on a server somewhere, just change the Connect address of the client node to the new servers listening address and everything will work the same. Quite fun right? :P
+
+Read the log messages from goTunneLS, you can see what its doing, the tunnels its creating, the certificates its loading, errors etc. I've used /dev/stdout as the logPath in config.json to output to standard output, use /dev/stderr for standard error. Quite cool.
 
 Note: The client and server are configured with a default self signed certificate I've provided. When actually using this program for real purposes, please look at the [Configuring Certificates and Keys](#configuring-certificates-and-keys) section to generate a new key pair. Anyone who has this key.pem file can decrypt your communications (the configuring certificates section also includes a small introduction, please read it if you do not know what I mean).
 
