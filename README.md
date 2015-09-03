@@ -90,6 +90,8 @@ Cert -- path to the RootCA for the certificate from the server. Useful when usin
 Outside of the array of nodes this is the other variable. It's the path to logFile. Created if doesn't exist, and if deleted during execution also recreated. Use /dev/stdout or /dev/stderr to output to terminal when needed.
 
 ##Configuring certificates and keys
+TLS works with certificates and asymmetric cryptography. If you don't understand what it is, I will soon explain //TODO explain
+
 I've already setup a openssl.cnf that should work for most people, you can of course use any certificate you want but this should make it much more streamlined for beginners. Open tls/openssl.cnf and modify the req\_distinguished\_name to fit your liking. Change the name and everything. Next choose if you want RSA or ECDSA. I recommend going for ECDSA, the keys are shorter and faster and more secure.
 
 ####ECDSA - RECOMMENDED
