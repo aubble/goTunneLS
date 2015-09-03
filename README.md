@@ -10,9 +10,9 @@ TLS wrapper in go! Wrap existing connections in TLS to bypass annoying DPI (deep
 
 ## How it works
 
- * +++ represents plain data
+ * --- represents plain data
 
- * \#\#\# represents TLS encrypted data
+ * \#\#\# represents the TLS tunnel around the plain data
 
 ### Normal connections
 
@@ -22,7 +22,11 @@ The link between the client and server is either insecure or it uses say SSH as 
 
 ### goTunneLS connections
 
-**real client &nbsp; +++---> &nbsp; gTLS client &nbsp; ###--> &nbsp; gTLS server &nbsp; +++---> &nbsp; real server**
++----------+      +---------------+      +---------------+      +----------+
+|          |      |               +######+               |      |          |
+|  client  +------+  gTLS client  |------|  gTLS server  +------+  server  |
+|          |      |               +######+               |      |          |
++----------+      +---------------+      +---------------+      +----------+
 
 Now the difference is that whatever the client sends to the gTLS client is forwarded over to the gTLS server and then finally over to the real server. The advantage here is that the gTLS client and gTLS server communicate via TLS thus protecting the data if the client/server communicate insecurely and also likely bypassing any DPI as TLS is almost never blocked.
 
@@ -41,9 +45,11 @@ Now that you understand how it works, also know that its pure TLS, know that no 
 
 ## Configuration
 
-The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and then the path to the logFile. A neat example is included. Please read [Example](#example). Each of these nodes in the array are either in server or client mode depending on the Mode field. Please take a look at the example config.json for an example. Otherwise here is the list of fields you can set in all the nodes.
+The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and then the path to the logFile. A neat simple example file, config.json, is included. Please read it, its very simple. Read [example](#example) for a little tutorial on using it.
 
-Note that you can use relative file paths, relative to the config file. So say the config file is in /etc/goTunneLS. if the value of Cert is "cert.pem" that really means "/etc/goTunneLS/cert.pem" as its relative to the config file. the moment goTunneLS gets the name of the config file as the argument it changes its directory to it.
+Anyways, each of these nodes in the array are either in server or client mode depending on the Mode field. Otherwise here is the list of fields you can set in all the nodes.
+
+Note that you can use relative file paths, relative to the config file. So say the config file is in /etc/goTunneLS. If the value of Cert is "cert.pem" that really means "/etc/goTunneLS/cert.pem" as its relative to the config file. The moment goTunneLS gets the name of the config file as the argument it changes its directory to it.
 
 ###Fields
 
