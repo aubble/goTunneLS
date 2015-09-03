@@ -107,7 +107,7 @@ Cert -- path to the RootCA for the certificate from the server. Useful when usin
 ###LogPath
 Outside of the array of nodes this is the other variable. It's the path to logFile. Created if doesn't exist, and if deleted during execution also recreated. Use /dev/stdout or /dev/stderr to output to terminal when needed.
 
-##Configuring certificates and keys
+##Configuring Certificates and Keys
 TLS works with certificates and asymmetric cryptography. Lets first understand what that means. Skip this section if you already know how it all works and just want to get to generating the cert/key.
 
 ####Certificates?? Keys?? What does it all mean??
@@ -158,7 +158,6 @@ If you also want to use this cert with say the name localhost, example.com and w
 ## Example
 Lets take a look at the example configuration file, config.json to get an idea of how goTunneLS is configured and how it works.
 First start a goTunneLS instance with the -c flag pointing to the configuration file
-//TODO DIAGRAM
 
 	goTunneLS -c config.json
 
@@ -189,7 +188,7 @@ The entire ordeal looks as follow.
 
 Hopefully it makes more sense now to you. nc does everything over plain text and goTunneLS allows you to wrap its insecure connection in TLS. You can take out the server node of the config.json, and take it and actually run it on a server somewhere, just change the Connect address of the client node to the new servers listening address and everything will work the same. Quite fun right? :P
 
-Note: The client and server are configured with a default certificate/key I've provided. Please look at the [Configuring Certificates and Keys](#configuring-certificates-and-keys) section to generate a new key pair.
+Note: The client and server are configured with a default self signed certificate I've provided. When actually using this program for real purposes, please look at the [Configuring Certificates and Keys](#configuring-certificates-and-keys) section to generate a new key pair. Anyone who has this key.pem file can decrypt your communications (the configuring certificates section also includes a small introduction, please read it if you do not know what I mean).
 
 ##ITS ALIVE!
 <img src="http://i.imgur.com/1s2v4l6.png">
