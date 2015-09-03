@@ -41,7 +41,7 @@ Now that you understand how it works, also know that its pure TLS, know that no 
 
 ## Configuration
 
-The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and the path to the logFile. Each of these nodes in the array are either in server or client mode depending on the Mode field. Please take a look at the example config.json for an example. Otherwise here is the list of fields you can set in all the nodes.
+The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and the path to the logFile. The example included is config.json. Each of these nodes in the array are either in server or client mode depending on the Mode field. Please take a look at the example config.json for an example. Otherwise here is the list of fields you can set in all the nodes.
 
 Note that you can use relative file paths, relative to the config file. So say the config file is in /etc/goTunneLS. if the value of Cert is "cert.pem" that really means "/etc/goTunneLS/cert.pem" as its relative to the config file. the moment goTunneLS gets the name of the config file as the argument it changes its directory to it.
 
@@ -67,9 +67,9 @@ TCPKeepAliveInterval -- interval between TCP keep alives in seconds, default is 
 
 ####Required Server Fields
 
-Cert -- path to the certificate file to send to client
+Cert -- path to the certificate that the server presents to clients
 
-Key -- path to the key file
+Key -- path to the key file of the Cert
 
 
 ####Optional Server fields
@@ -90,9 +90,11 @@ Cert -- path to the RootCA for the certificate from the server. Useful when usin
 Outside of the array of nodes this is the other variable. It's the path to logFile. Created if doesn't exist, and if deleted during execution also recreated. Use /dev/stdout or /dev/stderr to output to terminal when needed.
 
 ##Configuring certificates and keys
-TLS works with certificates and asymmetric cryptography. If you don't understand what it is, I will soon explain //TODO explain
+TLS works with certificates and asymmetric cryptography. If you don't understand what it is, google it for now and get a decent understanding to continue.
 
-I've already setup a openssl.cnf that should work for most people, you can of course use any certificate you want but this should make it much more streamlined for beginners. Open tls/openssl.cnf and modify the req\_distinguished\_name to fit your liking. Change the name and everything. Next choose if you want RSA or ECDSA. I recommend going for ECDSA, the keys are shorter and faster and more secure.
+I've already setup a openssl.cnf that should setup the correct openssl options for most people, you can of course use any certificate you want but this should make it much more streamlined for beginners.
+
+Open tls/openssl.cnf and modify the req\_distinguished\_name to fit your liking. Change the name and everything. Next choose if you want RSA or ECDSA. I recommend going for ECDSA, the keys are shorter and faster and more secure.
 
 ####ECDSA - RECOMMENDED
 Creating a ECDSA signed cert is a two step process.
@@ -131,7 +133,7 @@ If you also want to use this cert with say the name localhost, example.com and w
 
 
 ## Example
-Lets take a look at the example configuration file to get an idea of how its configured.
+Lets take a look at the example configuration file, config.json to get an idea of how goTunneLS is configured and how it works.
 First run a goTunneLS instance with the -c flag pointing to the configuration file (the default location it looks for is /etc/goTunneLS/config.json if no -c flag is provided)
 
 	goTunneLS -c config.json
