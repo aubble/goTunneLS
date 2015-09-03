@@ -49,7 +49,7 @@ An easy to follow example to understand how the program works. Works along side 
 +----------+                                                    +----------+
 </pre>
 
-The link between the client and server is either insecure or it uses say SSH as the protocol which is picked up by Deep Packet Filtering and thus blocked. You can tunnel it instead through a goTunneLS tunnel which is encrypted via TLS, which makes it much less likely to be blocked by DPI as the entire web uses TLS, its far too restrictive for most networks and you should be able to get through!
+The link between the client and server is either insecure or maybe it uses SSH as the protocol which is picked up by deep packet filtering and thus blocked. You can tunnel it instead through a goTunneLS tunnel which is encrypted via TLS, which makes it much less likely to be blocked by DPI as the entire web uses TLS, its far too restrictive for most networks and you should be able to get through.
 
 ### goTunneLS connections
 <pre>
@@ -62,7 +62,7 @@ The link between the client and server is either insecure or it uses say SSH as 
 
 Now the difference is that whatever the client sends to the gTLS client is forwarded over to the gTLS server and then finally over to the real server. The advantage here is that the gTLS client and gTLS server communicate via TLS thus protecting the data if the client/server communicate insecurely and also likely bypassing any DPI as TLS is almost never blocked.
 
-Now that you understand how it works, also know that its pure TLS, know that no other protocol is being used other than TLS to tunnel so its not necessary to use both the server and client. If a application communicates via TLS but the other does not, you only need to wrap insecure one.
+Now that you understand how it works, also know that its pure TLS, know that no other protocol is being used other than TLS to tunnel so its not necessary to use both the server and client. If a application communicates via TLS but the other does not, you only need to wrap insecure one. Thus it can also act as a proxy.
 
 #### gTLS Client
 Basically the client listens on it's Accept address for plain TCP connections and proxies them to its Connect address via TLS and TCP.
