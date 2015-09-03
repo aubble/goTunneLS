@@ -1,5 +1,7 @@
 # goTunneLS
 
+***UNDER DEVELOPMENT CAUTION***
+
 ## Description
 
 goTunneLS is a TLS wrapper/proxy in go. Wrap existing connections in TLS to bypass annoying DPI (deep packet filtering) from blocking your connections in other protocols or just secure insecure connections. It can also act as a proxy for an application that doesn't use TLS.
