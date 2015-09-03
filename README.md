@@ -113,6 +113,11 @@ The format for logging is:
 
 When its global logging the mode is global
 
+For example
+
+	goTunneLS: 2015/09/03 07:04:42 --> global -/ starting client node nc
+	goTunneLS: 2015/09/03 07:04:42 --> client nc -/ initializing
+
 ##Configuring Certificates and Keys
 TLS works with certificates and asymmetric cryptography. Lets first understand what that means. Skip this section if you already know how it all works and just want to get to generating the cert/key.
 
