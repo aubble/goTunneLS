@@ -4,7 +4,7 @@ default_keyfile        = key.pem
 default_md             = sha256
 distinguished_name     = req_distinguished_name
 prompt                 = no
-x509_extensions        = v3_ca 
+x509_extensions        = v3_ca
 encrypt_key            = no
 
 [ req_distinguished_name ]
@@ -21,4 +21,4 @@ basicConstraints       = critical, CA:true
 
 #[ alt_names ]
 #DNS.1 				   = COMMON.NAME
-#DNS.2 				   = SECOND.NAME
+#DNS.2 				   = *.SECOND.NAME

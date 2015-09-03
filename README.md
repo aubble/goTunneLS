@@ -223,14 +223,14 @@ First open openssl.cnf and modify the req\_distinguished\_name to fit your likin
 
 In order to use the certificate with multiple domain names, uncomment subjectAltName, [ alt\_names ], DNS.1 and DNS.2 and replace COMMON.NAME with the domain name set in req\_distinguished\_name and replace SECOND.NAME with the second name you want to use. You can also add more names with DNS.n where n is the next number.
 
-You can also use wildcards in domain names to match all sub domains. eg you can set the common name to "\*.example.com" to match all of example.com's subdomains such as www.example.com, but it won't match example.com, you'll need to set a second DNS name for that.
+You can also use wildcards in domain names to match all sub domains. eg you can set the common name to "\*.example.com" to match all of example.com's subdomains such as www.example.com, but it won't match example.com, you'll need to set second DNS name for that as in the above paragraph. Set common name to "\*.example.com" and the second DNS name to "example.com"
 
 Next choose whether or not you want to use ECDSA or RSA as the algorithm behind your certificate. I'd recommend ECDSA because the key sizes are smaller, its faster, and more secure. But if for some reason you want RSA, it works perfectly fine.
 
 ####ECDSA - RECOMMENDED
 Creating a ECDSA signed cert is a two step process. First we must generate the key.
 
-The first command uses the secp384r1 curve, tad slower but more secure, the second uses prime256v1 which is faster but less secure. Either works good, **run only one**
+The first command uses the secp384r1 curve, tad slower but more secure, the second uses prime256v1 which is faster but less secure. Either works well, **run only one**
 
 	openssl ecparam -genkey -name secp384r1 -out key.pem
 	openssl ecparam -genkey -name prime256v1 -out key.pem
