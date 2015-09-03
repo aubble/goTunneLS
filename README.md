@@ -215,9 +215,11 @@ Don't worry about the actual math behind it, I myself have a very primitive unde
 
 ###Generating Certificates
 
-I've already setup a openssl.cnf that should setup the correct openssl options for most people, this should make it much more streamlined for beginners. Just cd into the tls folder to where it is located before running any commands.
+These commands generate a self signed CA certificate, this means that it won't be trusted by default on your client. You must either add the path to it in the Cert field of the client or add it to the client's trust store.
 
-Open openssl.cnf and modify the req\_distinguished\_name to fit your liking. Change the domain name (common name), email etc.
+To generate certificates we use openssl. I've already setup a openssl.cnf that should setup the correct openssl options for most people, this should make it much more streamlined for beginners. Just cd into the tls folder to where it is located before running any commands.
+
+First open openssl.cnf and modify the req\_distinguished\_name to fit your liking. Change the domain name (common name), email etc.
 
 In order to use the certificate with multiple domain names, uncomment subjectAltName, [ alt\_names ], DNS.1 and DNS.2 and replace COMMON.NAME with the domain name set in req\_distinguished\_name and replace SECOND.NAME with the second name you want to use. You can also add more names with DNS.n where n is the next number.
 
@@ -226,33 +228,27 @@ You can also use wildcards in domain names to match all sub domains. eg you can 
 Next choose whether or not you want to use ECDSA or RSA as the algorithm behind your certificate. I'd recommend ECDSA because the key sizes are smaller, its faster, and more secure. But if for some reason you want RSA, it works perfectly fine.
 
 ####ECDSA - RECOMMENDED
-Creating a ECDSA signed cert is a two step process.
-First generate the key with
+Creating a ECDSA signed cert is a two step process. First we must generate the key.
+
+The first command uses the secp384r1 curve, tad slower but more secure, the second uses prime256v1 which is faster but less secure. Either works good, **run only one**
 
 	openssl ecparam -genkey -name secp384r1 -out key.pem
-
-If you want a different curve to be used on the key, first list out the curves with
-
-	openssl ecparam -list_curves
-
-Select whatever you want and replace the -name portion with the curve name you want. For example if I wanted to use the prime256v1 curve which is less secure but quicker
-
 	openssl ecparam -genkey -name prime256v1 -out key.pem
 
+That will generate a key.pem for you to use
 Next create the cert
 
 	openssl req -new -x509 -config openssl.cnf -key key.pem -nodes -out cert.pem
 
-There you go, you're done :)
+That will generate a self signed cert.pem for you to use.
 
 ####RSA
 You can edit the default\_bits field in the openssl.cnf if you don't want a RSA key size of 4096 but maybe instead 2048.
 
-Once you are ready cd into the tls directory and run
+This command will generate a self signed certificate and key for you, cert.pem and key.pem
 
 	openssl req -new -x509 -config openssl.cnf -nodes -out cert.pem
 
-That command will generate a self signed certificate and key for you in the directory to use with goTunneLS. Make sure you changed the CN in openssl.cnf to match the domain name of your server and you're good to go!
 
 ##Example
 Lets take a look at the example configuration file, config.json to get an idea of how goTunneLS is configured and how it works.
