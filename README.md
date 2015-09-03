@@ -154,15 +154,21 @@ This is a very vast topic and this is a very dumbed down version, but sufficient
 
 Lets begin with symmetric cryptography, what you are likely used to. Symmetric cryptography both parties must know the key to decrypt/encrypt. However this is a problem on the web, you can't send the key over to the client to initiate a encrypted session. If someone is listening and they grab the key, your entire session can be very easily decrypted.
 
-This is where asymmetric cryptography comes into play. This type of crypto is based on the premise of special maths and algorithms that allow you to generate two keys with a special property. Anything decrypted with one key, can only be decrypted by the other key as well as vice versa. Why is this crucial? 
+This is where asymmetric cryptography comes into play. This type of crypto is based on the premise of special maths and algorithms that allow you to generate two keys with a special property. Anything decrypted with one key, can only be decrypted by the other key as well as vice versa. Why is this crucial?
 
-This means that you can send out one key (the public key, or certificate) to other people to encrypt some data. They encrypt this data and send it back over to you, and you are the only one who can decrypt it because you are the only one who has the private key. Doesn't matter who's listening, they only get the public key, the key used to encrypt, not the key used to decrypt, and therefore they cannot decrypt. 
+This means that you can send out one key (the public key, or certificate) to other people to encrypt some data. They encrypt this data and send it back over to you, and you are the only one who can decrypt it because you are the only one who has the private key. Doesn't matter who's listening, they only get the public key, the key used to encrypt, not the key used to decrypt, and therefore they cannot decrypt.
 
-The other advantage of asymmetric cryptography is signing. eg If something is encrypted via the private key, it can only be decrypted via the public key correct? This means that whenever something is successfully decrypted via the public key you are 100% sure that the it comes from whoever has the private key of the this public key.
+The other advantage of asymmetric cryptography is signing. eg If something is encrypted via the private key, it can only be decrypted via the public key correct? This means that whenever something is successfully decrypted via the public key you are 100% sure that the it comes from whoever has the private key, as no one else can encrypt data to be decrypted with the public key.
+
+Signing comes into play with trust. If I setup a fake server with a certificate with the name www.google.com it shouldn't be trusted to be legit from google themselves. It should be rejected as insecure. But how, how will my computer know the difference between the legit certificate and the fake one?
+
+Well your computer comes with a set of root CAs (certificate authorities), basically a bunch of certificates that your computer 100% trusts as legit. These certificates are used to sign other certificates to validate their authenticity (the CAs are self signed, meaning you just trust them as legit, trust has to begin somewhere, you trust these CAs to only sign legit certificates).
+
+If a certificate is validated by one of the root CAs in your computer, it is trusted, otherwise it is not. The root CAs private keys are very securely protected so that certificates are only signed to the actual domain owners and not random people. You can create your own CA, add it to your computers store, and then sign a bunch of certificates to use privately. But remember that these certificates will only be trusted by computers who trust the CA. In the example section we do this, the certificate used is actually a CA certificate. As long as this CA cert is in the clients trust store, the certificate is trusted. This is why the Client node accepts the Cert field. This Cert field is what points it to the root CA you would like to use, in this its the CA cert itself because the CA cert has signed its self. Remember trust must begin somewhere. Where it begins are self signed certificates.
 
 Don't worry about the actual math behind it, I myself don't understand it, the above understanding is just fine to use this program. If you still don't understand it please do a bit of research.
 
-Now that we can successfully send out a certificate and have the client respond with encrypted data without anyone able to eavesdrop, we still have one problem left. Confirming the server is who they say they are. eg. I should not be able to spoof google.com. 
+Now that we can successfully send out a certificate and have the client respond with encrypted data without anyone able to eavesdrop, we still have one problem left. Confirming the server is who they say they are. eg. I should not be able to spoof google.com.
 
 ---
 
