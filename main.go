@@ -59,9 +59,9 @@ func main() {
 		if n.Name != "" {
 			n.Name = " " + n.Name
 		}
-		gTLS.logf("initalizing %s node %s", n.Mode + n.Name)
+		gTLS.logf("initalizing %s node%s", n.Mode, n.Name)
 		n.nodeWG = nodeWG
-		gTLS.logf("starting %s node %s", n.Mode + n.Name)
+		gTLS.logf("starting %s node%s", n.Mode, n.Name)
 		go n.run()
 	}
 	nodeWG.Wait()

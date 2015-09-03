@@ -301,4 +301,4 @@ Contributions are very welcome. File issues for bugs, fix bugs with a pull reque
 
 Feel free to contact me at anmol@aubble.com
 
-Feel free to edit the code, its not complicated and very well documented. Start at main.go and branch from there and you'll understand exactly how everything works very quickly. Also skip the OCSP code if it doesn't matter to you, its not very important or integral to the concept of the program. Its just for more secure TLS configurations.
+Editing the code is very easy, its not complicated and very well documented. Start at main.go and branch from there and you'll understand exactly how everything works very quickly. Also skip the OCSP code if it doesn't matter to you, its not very important or integral to the concept of the program. Its just for more secure TLS configurations.
