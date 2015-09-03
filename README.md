@@ -86,7 +86,7 @@ First is the Nodes array which consists of structs that represent the nodes to l
 
 ###Fields
 
-You can use relative file paths, relative to the config file. eg say the config file is in /etc/goTunneLS. If the value of the Cert field is "cert.pem" that really means "/etc/goTunneLS/cert.pem".
+You can use relative file paths, relative to the config file. eg say the config file is in /etc/goTunneLS. If the value of the Cert field is "cert.pem" that really means "/etc/goTunneLS/cert.pem"
 
 When it says int just put a integer such as 10 for the value, otherwise the value is implied as a string.
 
@@ -149,16 +149,20 @@ For example
 ##Configuring Certificates and Keys
 TLS works with certificates and asymmetric cryptography. Lets first understand what that means. Skip this section if you already know how it all works and just want to get to generating the cert/key.
 
-####Certificates?? Keys?? What does it all mean??
+####Certificates?? Keys??
+This is a very vast topic and this is a very dumbed down version, but sufficient enough for you to be able to use this program.
+
 Lets begin with symmetric cryptography, what you are likely used to. Symmetric cryptography both parties must know the key to decrypt/encrypt. However this is a problem on the web, you can't send the key over to the client to initiate a encrypted session. If someone is listening and they grab the key, your entire session can be very easily decrypted.
 
 This is where asymmetric cryptography comes into play. This type of crypto is based on the premise of special maths and algorithms that allow you to generate two keys with a special property. Anything decrypted with one key, can only be decrypted by the other key as well as vice versa. Why is this crucial? 
 
-This means that you can send out one key (the public key, or certificate) to other people to encrypt some data. They encrypt this data and send it back over to you, and you are the only one who can decrypt it because you are the only one who has the private key. Doesn't matter who's listening, they only get the public key, the key used to encrypt, not the key used to decrypt. 
+This means that you can send out one key (the public key, or certificate) to other people to encrypt some data. They encrypt this data and send it back over to you, and you are the only one who can decrypt it because you are the only one who has the private key. Doesn't matter who's listening, they only get the public key, the key used to encrypt, not the key used to decrypt, and therefore they cannot decrypt. 
 
-Don't worry about the math behind it, I myself don't understand it, the above understanding is just fine to use this program. If you still don't understand it please do a bit of research.
+The other advantage of asymmetric cryptography is signing. eg If something is encrypted via the private key, it can only be decrypted via the public key correct? This means that whenever something is successfully decrypted via the public key you are 100% sure that the it comes from whoever has the private key of the this public key.
 
-Now that we can successfully send out a certificate and have the client respond with encrypted data without anyone able to eavesdrop, we still have one problem left. Confirming the server is who they say they are. eg. I should not be able to spoof google.com. The way this is done is with certificate chains. 
+Don't worry about the actual math behind it, I myself don't understand it, the above understanding is just fine to use this program. If you still don't understand it please do a bit of research.
+
+Now that we can successfully send out a certificate and have the client respond with encrypted data without anyone able to eavesdrop, we still have one problem left. Confirming the server is who they say they are. eg. I should not be able to spoof google.com. 
 
 ---
 
