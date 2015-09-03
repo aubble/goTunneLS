@@ -175,9 +175,9 @@ Don't worry about the actual math behind it, I myself have a very primitive unde
 
 ##Generating Certificates
 
-I've already setup a openssl.cnf that should setup the correct openssl options for most people, this should make it much more streamlined for beginners. Just cd into the tls folder before running any commands.
+I've already setup a openssl.cnf that should setup the correct openssl options for most people, this should make it much more streamlined for beginners. Just cd into the tls folder to where it is located before running any commands.
 
-Open tls/openssl.cnf and modify the req\_distinguished\_name to fit your liking. Change the domain name (common name), email etc.
+Open openssl.cnf and modify the req\_distinguished\_name to fit your liking. Change the domain name (common name), email etc.
 
 If you are a beginner just playing around, follow the defaults except for maybe the next paragraph which will describe how to put multiple domain names on a single certificate.
 
