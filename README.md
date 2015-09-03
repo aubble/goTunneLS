@@ -8,6 +8,12 @@ TLS wrapper in go! Wrap existing connections in TLS to bypass annoying DPI (deep
 
 	go get -u github.com/aubble/goTunneLS
 
+Make sure your $GOPATH/bin is in your $PATH. Now you should be able to launch it with just
+
+	goTunneLS
+
+Use the -c flag to point it to a config file, the default location it looks for is /etc/goTunneLS/config.json if no -c flag is provided.
+
 ## How it works
 
  * --- represents plain data
@@ -102,7 +108,12 @@ Cert -- path to the RootCA for the certificate from the server. Useful when usin
 Outside of the array of nodes this is the other variable. It's the path to logFile. Created if doesn't exist, and if deleted during execution also recreated. Use /dev/stdout or /dev/stderr to output to terminal when needed.
 
 ##Configuring certificates and keys
-TLS works with certificates and asymmetric cryptography.
+TLS works with certificates and asymmetric cryptography. Lets first understand what that means. Skip this section if you already know how it all works and just want to get to generating the cert/key.
+
+####Certificates?? Keys?? What does it all mean??
+
+
+---
 
 I've already setup a openssl.cnf that should setup the correct openssl options for most people, you can of course use any certificate you want but this should make it much more streamlined for beginners.
 
@@ -146,24 +157,24 @@ If you also want to use this cert with say the name localhost, example.com and w
 
 ## Example
 Lets take a look at the example configuration file, config.json to get an idea of how goTunneLS is configured and how it works.
-First run a goTunneLS instance with the -c flag pointing to the configuration file (the default location it looks for is /etc/goTunneLS/config.json if no -c flag is provided)
+First start a goTunneLS instance with the -c flag pointing to the configuration file
 //TODO DIAGRAM
 
 	goTunneLS -c config.json
 
-then run
+Leave that open and open a new terminal. Now run
 
 	nc -l 5000
 
-this opens up the nc application listening and accepting connections on port 5000. It then outputs whatever is received on these connections to stdout, which in this case is connected to your terminal.
+This opens up the nc application listening and accepting connections on port 5000. It then outputs whatever is received on these connections to stdout, which in this case is connected to your terminal.
 
-leave that nc running and open a new terminal side by side. now run
+Leave that nc running and open a new terminal. Now run
 
 	nc localhost 5002
 
-this makes nc dial port 5002 on localhost (the same computer its running on). you'll notice that now when you type anything, and press enter it appears on the other nc instance running in the other terminal! but wait.... the port numbers are different how could this be? Thats goTunneLS doing its magic.
+This makes nc dial port 5002 on localhost (the same computer its running on). You'll notice that now when you type anything, and press enter it appears on the other nc instance running in the other terminal! but wait.... the port numbers are different how could this be, how are they connected??? Thats goTunneLS doing its magic.
 
-In that configuration file there are two goTunneLS "nodes" defined, 1 server and 1 client. The client's Listen address is port 5002 and Connect is to port 5001. This means it accepts plain TCP connections on port 5002 and proxies them to port 5001 with TLS TCP. The Server's listen address is port 5001, and Connect address is port 5000. This means it accepts TLS TCP connections on port 5001 and proxies them to port 5000 with plain TCP.
+In that configuration file there are two goTunneLS "nodes" defined, 1 server and 1 client. The client's Listen address is port 5002 and Connect is to port 5001. This means it accepts plain TCP connections on port 5002 and proxies them to port 5001 with TLS TCP. The Server's listen address is port 5001, and Connect address is port 5000. This means it accepts TLS TCP connections on port 5001 and proxies them to port 5000 with plain TCP. The server is configured with a default certificate/key I've provided. Please look at the 
 
 The entire ordeal looks as follow.
 
@@ -177,8 +188,6 @@ The entire ordeal looks as follow.
 </pre>
 
 Hopefully it makes more sense now to you. nc does everything over plain text and goTunneLS allows you to wrap its insecure connection in TLS. You can take out the server node of the config.json, and take it and actually run it on a server somewhere, just change the Connect address of the client node to the new servers listening address and everything will work the same. Quite fun right? :P
-
-Also notice the certificate they both point to and use? tls/cert.pem? Its the default cert I included along with its private key.
 
 ##ITS ALIVE!
 <img src="http://i.imgur.com/1s2v4l6.png">
