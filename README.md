@@ -23,9 +23,6 @@ If you want to understand how certificates work and how to generate your own cer
 ####[Example](#example)
 For a easy to follow example to understand how the program works. Works along side the included config.json file.
 
-####[How it works](#how-it-works)
-Quick high level explanation of how it works.
-
 If you're a newbie, read all of the documentation I've wrote specifically for you to get you to understand!
 
 ## How it works
