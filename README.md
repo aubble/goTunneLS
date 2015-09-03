@@ -175,15 +175,15 @@ Don't worry about the actual math behind it, I myself have a very primitive unde
 
 ##Generating Certificates
 
-I've already setup a openssl.cnf that should setup the correct openssl options for most people, you can of course use any certificate you want but this should make it much more streamlined for beginners.
+I've already setup a openssl.cnf that should setup the correct openssl options for most people, this should make it much more streamlined for beginners. Just cd into the tls folder before running any commands.
 
-Open tls/openssl.cnf and modify the req\_distinguished\_name to fit your liking. Change the common name (fully qualified domain name) and everything.
+Open tls/openssl.cnf and modify the req\_distinguished\_name to fit your liking. Change the domain name (common name), email etc.
 
-If you are a beginner just playing around, follow the defaults except for the next one which describes how to use multiple domain names on one cert.
+If you are a beginner just playing around, follow the defaults except for maybe the next paragraph which will describe how to put multiple domain names on a single certificate.
 
-If you also want to use this cert with say the name localhost, example.com and www.example.com, uncomment subjectAltName, [ alt\_names ], DNS.1 and DNS.2 and replace COMMON.NAME with the common name (the domain name, the CN) and replace SECOND.NAME with the second name you want to use. You can also add more names with DNS.n where n is the next number. You can also use wildcards, don't forget! eg you can set the common name to "\*.example.com" to match all of example.com's subdomains.
+In order to use the certificate with multiple domain names, uncomment subjectAltName, [ alt\_names ], DNS.1 and DNS.2 and replace COMMON.NAME with the domain name set in req\_distinguished\_name and replace SECOND.NAME with the second name you want to use. You can also add more names with DNS.n where n is the next number. You can also use wildcards in domain names to match all sub domains. eg you can set the common name to "\*.example.com" to match all of example.com's subdomains such as www.example.com, but it won't match example.com, you'll need to set a second DNS name for that.
 
-If you want to instead generate a .csr and get it signed by some CA just remove the -x509 option from the certificate generating command and the BasicConstraints line under v3_ca in openssl.cnf.
+If you want to instead generate a csr and not a cert to get it signed by some CA just remove the -x509 option from the certificate generating command and the BasicConstraints line under v3_ca in openssl.cnf.
 
 If you won't be using multiple domain names nor generating a self signed CA cert, get rid of all their lines including the v3\_ca and x509\_extensions line
 
@@ -218,7 +218,7 @@ Once you are ready cd into the tls directory and run
 
 That command will generate a self signed certificate and key for you in the directory to use with goTunneLS. Make sure you changed the CN in openssl.cnf to match the domain name of your server and you're good to go!
 
-## Example
+##Example
 Lets take a look at the example configuration file, config.json to get an idea of how goTunneLS is configured and how it works.
 First start a goTunneLS instance with the -c flag pointing to the configuration file
 
