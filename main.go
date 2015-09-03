@@ -55,9 +55,13 @@ func main() {
 	var nodeWG sync.WaitGroup
 	nodeWG.Add(len(gTLS.Nodes))
 	for _, n := range gTLS.Nodes {
-		gTLS.logf("initalizing %s node %s", n.Mode, n.Name)
+		// empty names don't have a odd space
+		if n.Name != "" {
+			n.Name = " " + n.Name
+		}
+		gTLS.logf("initalizing %s node %s", n.Mode + n.Name)
 		n.nodeWG = nodeWG
-		gTLS.logf("starting %s node %s", n.Mode, n.Name)
+		gTLS.logf("starting %s node %s", n.Mode + n.Name)
 		go n.run()
 	}
 	nodeWG.Wait()

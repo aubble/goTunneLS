@@ -111,7 +111,7 @@ The format for logging is:
 
 	goTunneLS: year/month/date hour/minute/second --> mode name -/ message
 
-When its global logging the mode is global
+When its global logging the mode is global and name is empty
 
 For example
 
