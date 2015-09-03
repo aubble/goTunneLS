@@ -175,13 +175,15 @@ Don't worry about the actual math behind it, I myself have a very primitive unde
 
 ##Generating Certificates
 
-I've already setup a openssl.cnf that should setup the correct openssl options for most people, you can of course use any certificate you want but this should make it much more streamlined for beginners. 
+I've already setup a openssl.cnf that should setup the correct openssl options for most people, you can of course use any certificate you want but this should make it much more streamlined for beginners.
 
-Open tls/openssl.cnf and modify the req\_distinguished\_name to fit your liking. Change the name and everything. 
+Open tls/openssl.cnf and modify the req\_distinguished\_name to fit your liking. Change the common name (fully qualified domain name) and everything.
 
-Just remove the -x509 option from the certificate generating command and the BasicConstraints line under v3_ca in openssl.cnf.
+If you are a beginner just playing around, follow the defaults except for the next one which describes how to use multiple domain names on one cert.
 
-If you also want to use this cert with say the name localhost, example.com and www.example.com, uncomment subjectAltName, [ alt\_names ], DNS.1 and DNS.2 and replace COMMON.NAME with the common name (the domain name, the CN) and replace SECOND.NAME with the second name you want to use. You can also add more names with DNS.n where n is the next number.
+If you also want to use this cert with say the name localhost, example.com and www.example.com, uncomment subjectAltName, [ alt\_names ], DNS.1 and DNS.2 and replace COMMON.NAME with the common name (the domain name, the CN) and replace SECOND.NAME with the second name you want to use. You can also add more names with DNS.n where n is the next number. You can also use wildcards, don't forget! eg you can set the common name to "\*.example.com" to match all of example.com's subdomains.
+
+If you want to instead generate a .csr and get it signed by some CA just remove the -x509 option from the certificate generating command and the BasicConstraints line under v3_ca in openssl.cnf.
 
 If you won't be using multiple domain names nor generating a self signed CA cert, get rid of all their lines including the v3\_ca and x509\_extensions line
 
@@ -197,7 +199,7 @@ If you want a different curve to be used on the key, first list out the curves w
 
 	openssl ecparam -list_curves
 
-select it and replace the -name portion with the curve name you want. for example if I wanted to use the prime256v1 curve
+Select whatever you want and replace the -name portion with the curve name you want. For example if I wanted to use the prime256v1 curve which is less secure but quicker
 
 	openssl ecparam -genkey -name prime256v1 -out key.pem
 
@@ -215,12 +217,6 @@ Once you are ready cd into the tls directory and run
 	openssl req -new -x509 -config openssl.cnf -nodes -out cert.pem
 
 That command will generate a self signed certificate and key for you in the directory to use with goTunneLS. Make sure you changed the CN in openssl.cnf to match the domain name of your server and you're good to go!
-
----
-
-Now whenever you set the client config, make sure Cert points to this generated certificate and when setting up the server config make sure Cert and Key point to their respective generated files here.
-
-
 
 ## Example
 Lets take a look at the example configuration file, config.json to get an idea of how goTunneLS is configured and how it works.
