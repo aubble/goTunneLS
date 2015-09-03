@@ -90,7 +90,7 @@ Cert -- path to the RootCA for the certificate from the server. Useful when usin
 Outside of the array of nodes this is the other variable. It's the path to logFile. Created if doesn't exist, and if deleted during execution also recreated. Use /dev/stdout or /dev/stderr to output to terminal when needed.
 
 ##Configuring certificates and keys
-TLS works with certificates and asymmetric cryptography. If you don't understand what it is, google it for now and get a decent understanding to continue.
+TLS works with certificates and asymmetric cryptography. //TODO EXPLAIN it
 
 I've already setup a openssl.cnf that should setup the correct openssl options for most people, you can of course use any certificate you want but this should make it much more streamlined for beginners.
 
@@ -135,6 +135,7 @@ If you also want to use this cert with say the name localhost, example.com and w
 ## Example
 Lets take a look at the example configuration file, config.json to get an idea of how goTunneLS is configured and how it works.
 First run a goTunneLS instance with the -c flag pointing to the configuration file (the default location it looks for is /etc/goTunneLS/config.json if no -c flag is provided)
+//TODO DIAGRAM
 
 	goTunneLS -c config.json
 
