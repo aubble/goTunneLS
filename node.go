@@ -287,10 +287,8 @@ func (n *node) client() error {
 
 // listenAndServe accepts connections on n.Accept
 // it then dials n.Connect and copies all data between the two
-// connections.
-//
-// listening is done with the n.Listen function and dialing is done with the
-// n.Dial function
+// connections. Listening is done with the n.Listen function
+// and dialing is done with the n.Dial function
 func (n *node) listenAndServe() {
 	handleError := func(err error) {
 		n.logln(err)
@@ -345,7 +343,7 @@ func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 }
 
 // logln logs to the global fileLogger as global
-// arguements are handled same as fmt.Println
+// arguments are handled same as fmt.Println
 func (n *node) logln(v ...interface{}) {
 	if logger.Logger != nil {
 		logger.println(append([]interface{}{"-->", n.Mode + n.Name, "-/"}, v...)...)
@@ -353,7 +351,7 @@ func (n *node) logln(v ...interface{}) {
 }
 
 // logf logs to the global fileLogger as global
-// arguements are handled same as fmt.Printf
+// arguments are handled same as fmt.Printf
 func (n *node) logf(format string, v ...interface{}) {
 	if logger.Logger != nil {
 		logger.printf("--> "+n.Mode + n.Name+" -/ "+format, v...)
