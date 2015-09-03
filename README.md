@@ -14,7 +14,7 @@ Make sure your $GOPATH/bin is in your $PATH. Now you should be able to launch it
 
 Use the -c flag to point it to a config file, the default location it looks for is /etc/goTunneLS/config.json if no flag is provided. Take a look at the included config.json for an example configuration and read [Example](#example) to get an idea of how to use the program.
 
-If you're a newbie, read all of this documentation I've wrote specifically for you to get you to understand!
+If you're a newbie, read all of the documentation I've wrote specifically for you to get you to understand!
 
 ## How it works
 
