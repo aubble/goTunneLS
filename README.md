@@ -17,10 +17,10 @@ Use the -c flag to point it to a config file, the default location it looks for 
 ####[Configuration](#configuration-1)
 Learn how to configure the program. Please also read the included config.json and the Example section. They provide a hands on example to understand the configuration and usage of the program.
 
-####[Configuring Certificates and Keys](#configuring-certificates-and-keys)
+####[Configuring Certificates and Keys](#configuring-certificates-and-keys-1)
 If you want to understand how certificates work and how to generate your own certificates to use.
 
-####[Example](#example)
+####[Example](#example-1)
 An easy to follow example to understand how the program works. Works along side the included config.json file.
 
 **If you're a newbie, read all of the documentation I've wrote specifically for you to get you to understand!**
