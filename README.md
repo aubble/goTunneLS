@@ -41,7 +41,7 @@ Now that you understand how it works, also know that its pure TLS, know that no 
 
 ## Configuration
 
-The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and the path to the logFile. The example included is config.json. Each of these nodes in the array are either in server or client mode depending on the Mode field. Please take a look at the example config.json for an example. Otherwise here is the list of fields you can set in all the nodes.
+The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and then the path to the logFile. A neat example is included. Please read [Example](#example). Each of these nodes in the array are either in server or client mode depending on the Mode field. Please take a look at the example config.json for an example. Otherwise here is the list of fields you can set in all the nodes.
 
 Note that you can use relative file paths, relative to the config file. So say the config file is in /etc/goTunneLS. if the value of Cert is "cert.pem" that really means "/etc/goTunneLS/cert.pem" as its relative to the config file. the moment goTunneLS gets the name of the config file as the argument it changes its directory to it.
 
