@@ -43,7 +43,7 @@ Now that you understand how it works, also know that its pure TLS, know that no 
 
 The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and the path to the logFile. Each of these nodes in the array are either in server or client mode depending on the Mode field. Please take a look at the example config.json for an example. Otherwise here is the list of fields you can set in all the nodes.
 
-Note that you can use relative file paths, relative to the config file. So say the config file is in /etc/goTunneLS. if the value of Cert is "cert.pem" that really means "/etc/goTunneLS/cert.pem" as its relative to the config file. the moment goTunneLS gets the name of the config file as the arguement it changes its directory to it.
+Note that you can use relative file paths, relative to the config file. So say the config file is in /etc/goTunneLS. if the value of Cert is "cert.pem" that really means "/etc/goTunneLS/cert.pem" as its relative to the config file. the moment goTunneLS gets the name of the config file as the argument it changes its directory to it.
 
 ###Fields
 
@@ -138,7 +138,7 @@ then run
 
 	nc -l 5000
 
-this opens up the nc application listening and accepting connections on port 5000. It then outputs whatever is recieved on these connections to stdout, which in this case is connected to your terminal.
+this opens up the nc application listening and accepting connections on port 5000. It then outputs whatever is received on these connections to stdout, which in this case is connected to your terminal.
 
 leave that nc running and open a new terminal side by side. now run
 
@@ -164,4 +164,4 @@ Contributions are very welcome. File issues for bugs, fix bugs with a pull reque
 
 Feel free to contact me at anmol@aubble.com
 
-Feel free to edit the code, its not complicated and very well documented. Start at main.go and branch from there and you'll understand exactly how everything works very quickly. Also skip the OCSP code if it doesn't matter to you, its not every important or integral to the concept. Its just for more secure TLS configurations.
+Feel free to edit the code, its not complicated and very well documented. Start at main.go and branch from there and you'll understand exactly how everything works very quickly. Also skip the OCSP code if it doesn't matter to you, its not very important or integral to the concept of the program. Its just for more secure TLS configurations.
