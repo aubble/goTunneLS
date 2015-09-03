@@ -59,26 +59,26 @@ Now that you understand how it works, also know that its pure TLS, know that no 
 
 The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and then the path to the logFile. A neat simple example file, config.json, is included.
 
-{
-	"Nodes": [
-		{
-			"Name": "nc -l",
-			"Mode": "server",
-			"Accept": "5001",
-			"Connect": "5000",
-			"Cert": "tls/cert.pem",
-			"Key": "tls/key.pem"
-		},
-		{
-			"Name": "nc",
-			"Mode": "client",
-			"Accept": "5002",
-			"Connect": "5001",
-			"Cert": "tls/cert.pem"
-		}
-	],
-	"LogPath": "/dev/stdout"
-}
+	{
+		"Nodes": [
+			{
+				"Name": "nc -l",
+				"Mode": "server",
+				"Accept": "5001",
+				"Connect": "5000",
+				"Cert": "tls/cert.pem",
+				"Key": "tls/key.pem"
+			},
+			{
+				"Name": "nc",
+				"Mode": "client",
+				"Accept": "5002",
+				"Connect": "5001",
+				"Cert": "tls/cert.pem"
+			}
+		],
+		"LogPath": "/dev/stdout"
+	}
 
 Note: read [example](#example) for a little tutorial on using it and the rest of the program.
 
@@ -150,7 +150,7 @@ TLS works with certificates and asymmetric cryptography. Lets first understand w
 ####Certificates?? Keys?? What does it all mean??
 Lets begin with symmetric cryptography, what you are likely used to. Symmetric cryptography both parties must know the key to decrypt/encrypt. However this is a problem on the web, you can't send the key over to the client to initiate a encrypted session. If someone is listening and they grab the key, your entire session can be very easily decrypted.
 
-This is where asymmetric cryptography comes into play. This type of crypto is based on the premise of special maths and algorithms that allow you to generate two keys with a special property. Anything decrypted with one key, can only be decrypted by the other key. Why is this crucial?
+This is where asymmetric cryptography comes into play. This type of crypto is based on the premise of special maths and algorithms that allow you to generate two keys with a special property. Anything decrypted with one key, can only be decrypted by the other key. Why is this crucial? This means
 
 ---
 
