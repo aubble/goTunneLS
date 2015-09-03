@@ -34,6 +34,11 @@ Basically the client listens on it's Accept address for plain TCP connections an
 
 Basically the server does the exact opposite. Listens on it's Accept address for TLS TCP connections and proxies them to its Connect address via plain TCP.
 
+---
+
+Now that you understand how it works, also know that its pure TLS, know that no other protocol is being used other than TLS to tunnel so its not necessary to use both the server and client. If a application communicates via TLS but the other does not, you only need to wrap insecure one. 
+
+
 ## Configuration
 
 The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and the path to the logFile. Each of these nodes in the array are either in server or client mode depending on the Mode field. Please take a look at the example config.json for an example. Otherwise here is the list of fields you can set in all the nodes.
@@ -145,9 +150,11 @@ In that configuration file there are two goTunneLS "nodes" defined, 1 server and
 
 Hopefully it makes more sense now to you. nc does everything over plain text and goTunneLS allows you to wrap its insecure connection in TLS. You can take out the server node of the config.json, and take it and actually run it on a server somewhere, just change the Connect address of the client node to the Server's listening address and everything will work the same. You just tunneled nc through TLS!
 
+Also notice the certificate they both point to and use? tls/cert.pem? Its the default cert I included along with its private key.
+
+##ITS ALIVE!
 <img src="http://i.imgur.com/1s2v4l6.png">
 
-Now that you understand how it works, also know that its pure TLS, know that no other protocol is being used other than TLS to tunnel so its not necessary to use both the server and client. If a application communicates via TLS but the other does not, you only need to wrap insecure one. Also notice the certificate they both point to and use? tls/cert.pem? Its the default cert I included along with its private key.
 
 ## Contribute
 
