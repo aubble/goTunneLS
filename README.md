@@ -70,25 +70,6 @@ Basically the server does the exact opposite. Listens on it's Accept address for
 
 ## Configuration
 
-###Startup
-
-####Linux
-//TODO get the file off the server
-I've included the goTunneLS.service file for systemd in linux. First copy it into /etc/systemd/system/
-
-Next change the ExecStart field in goTunneLS.service to the absolute path of the goTunneLS executable on your system. Finally add the -c flag if needed to point to the location of the config file if it isn't /etc/goTunneLS/config.json.
-
-Now reload systemd with
-
-	sudo systemctl daemon-reload
-
-####Mac
-I've included the goTunneLS.plist launch daemon file for launchctl in osx. First copy it into /Library/LaunchDaemons. Next change the first string of the ProgramArguments array to the absolute path of the goTunneLS executable on your system. Now if you need to specify the location of the config file, please do so on the third string tag. Otherwise delete the second and third tags
-
-Finally load it with
-
-	sudo launchctl load -w /Library/LaunchDaemons/goTunneLS.plist
-
 ###config.json
 
 The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and then the path to the logFile. A neat simple example file, config.json, is included.
@@ -178,6 +159,27 @@ For example
 
 	goTunneLS: 2015/09/03 07:04:42 --> global -/ starting client node nc
 	goTunneLS: 2015/09/03 07:04:42 --> client nc -/ initializing
+
+###Startup
+In order to launch goTunneLS at startup with your OS of choice follow the instructions.
+
+####Linux
+//TODO get the file off the server
+I've included the goTunneLS.service file for systemd in linux. First copy it into /etc/systemd/system/
+
+Next change the ExecStart field in goTunneLS.service to the absolute path of the goTunneLS executable on your system. Finally add the -c flag if needed to point to the location of the config file if it isn't /etc/goTunneLS/config.json.
+
+Now reload systemd with
+
+	sudo systemctl daemon-reload
+
+####Mac
+I've included the goTunneLS.plist launch daemon file for launchctl in osx. First copy it into /Library/LaunchDaemons. Next change the first string of the ProgramArguments array to the absolute path of the goTunneLS executable on your system. Now if you need to specify the location of the config file, please do so on the third string tag. Otherwise delete the second and third tags
+
+Finally load it with
+
+	sudo launchctl load -w /Library/LaunchDaemons/goTunneLS.plist
+
 
 
 ##Configuring Certificates and Keys
