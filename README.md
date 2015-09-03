@@ -21,9 +21,9 @@ Learn how to configure the program. Please also read the included config.json an
 If you want to understand how certificates work and how to generate your own certificates to use.
 
 ####[Example](#example)
-For a easy to follow example to understand how the program works. Works along side the included config.json file.
+An easy to follow example to understand how the program works. Works along side the included config.json file.
 
-If you're a newbie, read all of the documentation I've wrote specifically for you to get you to understand!
+**If you're a newbie, read all of the documentation I've wrote specifically for you to get you to understand!
 
 ## How it works
 
