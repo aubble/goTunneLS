@@ -20,7 +20,7 @@ Use the -c flag to point it to a config file, the default location it looks for 
 High level overview of how the goTunneLS works with some neat diagrams.
 
 ####[Configuration](#configuration-1)
-Learn how to configure the program. Please also read the included config.json and the Example section. They provide a hands on example to understand the configuration and usage of the program.
+Learn how to configure the program options as well as how to get it to run as a daemon on linux/mac. Please also read the included config.json and the Example section. They provide a hands on example to understand the configuration and usage of the program.
 
 ####[Configuring Certificates and Keys](#configuring-certificates-and-keys-1)
 If you want to understand how certificates work and how to generate your own certificates to use.
