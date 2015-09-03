@@ -12,7 +12,11 @@ Make sure your $GOPATH/bin is in your $PATH. Now you should be able to launch it
 
 	goTunneLS
 
-Use the -c flag to point it to a config file, the default location it looks for is /etc/goTunneLS/config.json if no flag is provided. Take a look at the included config.json for an example configuration and read [Example](#example) to get an idea of how to use the program.
+Use the -c flag to point it to a config file, the default location it looks for is /etc/goTunneLS/config.json if no flag is provided. 
+Take a look at the included config.json for an example configuration and read [Example](#example) to get an idea of how to use the program.
+Read [Configuration](#configuration) if you don't understand how something is configured.
+Read [Configuring Certificates and Keys](#configuring-certificates-and-keys) if you want to understand how to generate your own certificates to use.
+Read [How it works](#how-it-works) to understand how it works
 
 If you're a newbie, read all of the documentation I've wrote specifically for you to get you to understand!
 
@@ -45,7 +49,6 @@ The link between the client and server is either insecure or it uses say SSH as 
 Now the difference is that whatever the client sends to the gTLS client is forwarded over to the gTLS server and then finally over to the real server. The advantage here is that the gTLS client and gTLS server communicate via TLS thus protecting the data if the client/server communicate insecurely and also likely bypassing any DPI as TLS is almost never blocked.
 
 #### gTLS Client
-
 Basically the client listens on it's Accept address for plain TCP connections and proxies them to its Connect address via TLS and TCP.
 
 #### gTLS Server
@@ -133,7 +136,7 @@ SessionKeyRotationInterval -- int -- interval between session key rotation in se
 Cert -- path to the RootCA for the certificate from the server. Useful when using self signed certificates (like below) that are not in the operating systems store, you must use this option to point to the RootCA in those cases or you'll get a nasty error about the certificate not being trusted.
 
 
-###LogPath
+####LogPath
 It's the path to logFile. Created if doesn't exist, and if deleted during execution also recreated. Use /dev/stdout or /dev/stderr to output to terminal when needed.
 
 The format for logging is:
@@ -175,7 +178,7 @@ In the example section we do this, the certificate used is actually a CA certifi
 
 Don't worry about the actual math behind it, I myself have a very primitive understanding. If you understand the above, you're good enough to use this program. If you don't, please take the time to research it a bit, it'll go a long way.
 
-##Generating Certificates
+###Generating Certificates
 
 I've already setup a openssl.cnf that should setup the correct openssl options for most people, this should make it much more streamlined for beginners. Just cd into the tls folder to where it is located before running any commands.
 
