@@ -165,12 +165,12 @@ For example
 	goTunneLS: 2015/09/03 07:04:42 --> client nc -/ initializing
 
 ###Run at boot
-In order to launch goTunneLS at boot with your OS of choice follow the instructions.
+In order to launch goTunneLS at boot with your OS of choice follow the instructions. The startup files are located in the startup folder.
 
 ####Linux
 //TODO get the file off the server
 
-I've included the goTunneLS.service file for systemd in linux. First copy it into /etc/systemd/system/
+I've included a goTunneLS.service file for systemd in linux. First copy it into /etc/systemd/system/
 
 Next change the ExecStart field in goTunneLS.service to the absolute path of the goTunneLS executable on your system. Finally add the -c flag if needed to point to the location of the config file if it isn't /etc/goTunneLS/config.json.
 
