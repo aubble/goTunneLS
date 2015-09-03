@@ -2,9 +2,11 @@
 
 ## Description
 
-TLS wrapper in go! Wrap existing connections in TLS to bypass annoying DPI (deep packet filtering) from blocking your ssh connection or just protect insecure connections. Go 1.5 only so make sure you have it installed and configured correctly.
+goTunneLS is a TLS wrapper/proxy in go. Wrap existing connections in TLS to bypass annoying DPI (deep packet filtering) from blocking your connections in other protocols or just secure insecure connections.
 
 ## Install
+
+Go 1.5 only so make sure you have it installed and configured correctly.
 
 	go get -u github.com/aubble/goTunneLS
 
