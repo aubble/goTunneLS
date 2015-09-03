@@ -51,7 +51,7 @@ Now that you understand how it works, also know that its pure TLS, know that no 
 
 ## Configuration
 
-The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and then the path to the logFile. A neat simple example file, config.json, is included. Please read it, its very simple. Read [example](#example) for a little tutorial on using it.
+The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and then the path to the logFile. A neat simple example file, config.json, is included. Please read it, its very simple. Read [example](#example) for a little tutorial on using it and the rest of the program.
 
 Anyways, each of these nodes in the array are either in server or client mode depending on the Mode field. Otherwise here is the list of fields you can set in all the nodes.
 
@@ -102,7 +102,7 @@ Cert -- path to the RootCA for the certificate from the server. Useful when usin
 Outside of the array of nodes this is the other variable. It's the path to logFile. Created if doesn't exist, and if deleted during execution also recreated. Use /dev/stdout or /dev/stderr to output to terminal when needed.
 
 ##Configuring certificates and keys
-TLS works with certificates and asymmetric cryptography. //TODO EXPLAIN it
+TLS works with certificates and asymmetric cryptography.
 
 I've already setup a openssl.cnf that should setup the correct openssl options for most people, you can of course use any certificate you want but this should make it much more streamlined for beginners.
 
@@ -163,9 +163,20 @@ leave that nc running and open a new terminal side by side. now run
 
 this makes nc dial port 5002 on localhost (the same computer its running on). you'll notice that now when you type anything, and press enter it appears on the other nc instance running in the other terminal! but wait.... the port numbers are different how could this be? Thats goTunneLS doing its magic.
 
-In that configuration file there are two goTunneLS "nodes" defined, 1 server and 1 client. The client listens on port 5002 and proxies to port 5001 which is where the server is listening. The server listening on port 5001 then proxies the data to port 5000 which is where nc -l is listening.
+In that configuration file there are two goTunneLS "nodes" defined, 1 server and 1 client. The client's Listen address is port 5002 and Connect is to port 5001. This means it accepts plain TCP connections on port 5002 and proxies them to port 5001 with TLS TCP. The Server's listen address is port 5001, and Connect address is port 5000. This means it accepts TLS TCP connections on port 5001 and proxies them to port 5000 with plain TCP.
 
-Hopefully it makes more sense now to you. nc does everything over plain text and goTunneLS allows you to wrap its insecure connection in TLS. You can take out the server node of the config.json, and take it and actually run it on a server somewhere, just change the Connect address of the client node to the Server's listening address and everything will work the same. You just tunneled nc through TLS!
+The entire ordeal looks as follow.
+
+<pre>
+			  port 5002     		 port 5001              port 5000
++----------+      +---------------+      +---------------+      +----------+
+|          |      |               +######+               |      |          |
+|    nc    +------+  gTLS client  |------|  gTLS server  +------+   nc -l  |
+|          |      |               +######+               |      |          |
++----------+      +---------------+      +---------------+      +----------+
+</pre>
+
+Hopefully it makes more sense now to you. nc does everything over plain text and goTunneLS allows you to wrap its insecure connection in TLS. You can take out the server node of the config.json, and take it and actually run it on a server somewhere, just change the Connect address of the client node to the new servers listening address and everything will work the same. Quite fun right? :P
 
 Also notice the certificate they both point to and use? tls/cert.pem? Its the default cert I included along with its private key.
 
