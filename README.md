@@ -84,11 +84,13 @@ Note: read [example](#example) for a little tutorial on using it and the rest of
 
 First is the nodes array which consists of structs that represent the nodes to launch followed by LogPath to point to the logging file (/dev/stdout is standard output). The following section explains all the fields allowed in the structs representing nodes.
 
-Note: You can use relative file paths, relative to the config file. eg say the config file is in /etc/goTunneLS. If the value of the Cert field is "cert.pem" that really means "/etc/goTunneLS/cert.pem" as goTunneLS treats relative paths as relative to the config.json file.
-
 ###Fields
 
-When it says int just put a integer such as 10 for the value, otherwise the value is implied as a string.
+Note: You can use relative file paths, relative to the config file. eg say the config file is in /etc/goTunneLS. If the value of the Cert field is "cert.pem" that really means "/etc/goTunneLS/cert.pem" as goTunneLS treats relative paths as relative to the config.json file.
+
+note: When it says int just put a integer such as 10 for the value, otherwise the value is implied as a string.
+
+note: don't bother with the optional fields if you don't care, they aren't necessary. Most people would likely just use the required fields.
 
 ####Required
 
@@ -117,16 +119,16 @@ Key -- path to the key file of the Cert
 
 ####Optional Server fields
 
-Issuer -- path to the issuer file of the cert. Only used in OCSP to validate the response.
+Issuer -- path to the issuer file of the cert. Only used in OCSP to validate the response from the OCSP responder.
 
-OCSPInterval -- int --interval between OCSP staple updates in seconds. Only applies when the OCSP responder has the most up to date information, otherwise the interval between OCSP staple updates will be until the next update. Default is 180
+OCSPInterval -- int --interval between OCSP staple updates in seconds. Only applies when the OCSP responder has the most up to date information, otherwise the interval between OCSP staple updates will be until the next update. Default is 180.
 
-SessionKeyRotationInterval -- int -- interval between session key rotation in seconds, default is 28800 or 8 hours
+SessionKeyRotationInterval -- int -- interval between session key rotation in seconds, default is 28800 or 8 hours.
 
 
 ####Optional Client Options
 
-Cert -- path to the RootCA for the certificate from the server. Useful when using self signed certificates (like below) that are not in the operating systems store, you must use this option to point to the RootCA in those cases or you'll get a nasty error.
+Cert -- path to the RootCA for the certificate from the server. Useful when using self signed certificates (like below) that are not in the operating systems store, you must use this option to point to the RootCA in those cases or you'll get a nasty error about the certificate not being trusted.
 
 
 ###LogPath
