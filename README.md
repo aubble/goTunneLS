@@ -157,7 +157,7 @@ Hopefully it makes more sense now to you. nc does everything over plain text and
 Also notice the certificate they both point to and use? tls/cert.pem? Its the default cert I included along with its private key.
 
 ##ITS ALIVE!
-<img src="http://i.imgur.com/1s2v4l6.png" border="0">
+<img src="http://i.imgur.com/1s2v4l6.png">
 
 
 ## Contribute
