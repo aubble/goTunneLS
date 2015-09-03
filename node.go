@@ -82,7 +82,7 @@ func (n *node) run() {
 	if !strings.Contains(n.Connect, ":") {
 		n.Connect = ":" + n.Connect
 	}
-	// fix timeout fields
+	// set defaults for time fields
 	if n.Timeout == 0 {
 		n.Timeout = 15
 	}
@@ -95,7 +95,7 @@ func (n *node) run() {
 	if n.TCPKeepAliveInterval == 0 {
 		n.TCPKeepAliveInterval = 15
 	}
-	n.Timeout *= time.Second
+	// calculate real time.Duration for time fields
 	n.Timeout *= time.Second
 	n.OCSPInterval *= time.Second
 	n.SessionKeyRotationInterval *= time.Second
