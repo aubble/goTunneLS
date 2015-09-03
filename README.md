@@ -162,7 +162,7 @@ This means that you can send out one key (the public key, or certificate) to oth
 
 The other advantage of asymmetric cryptography is signing. eg If something is encrypted via the private key, it can only be decrypted via the public key correct? This means that whenever something is successfully decrypted via the public key you are 100% sure that the it comes from whoever has the private key, as no one else can encrypt data to be decrypted with the public key.
 
-######Trust
+#####Trust
 Signing comes into play with trust. If I setup a fake server with a certificate with the name www.google.com, it shouldn't be trusted to be legit. It should be rejected as insecure. But how, how will my computer know the difference between the legit certificate from google and the fake one?
 
 Well your computer comes with a set of root CAs (certificate authorities), basically a bunch of certificates that your computer 100% trusts as legit. These certificates are used to sign other certificates to validate their authenticity. eg they use their private key to sign certificates so that you can successfully decrypt certificates with the CAs public key, thus validating the certificate. (the root CAs are self signed, therefore you just have to trust them as being legit, trust has to begin somewhere)
