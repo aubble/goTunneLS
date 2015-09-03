@@ -179,13 +179,9 @@ I've already setup a openssl.cnf that should setup the correct openssl options f
 
 Open openssl.cnf and modify the req\_distinguished\_name to fit your liking. Change the domain name (common name), email etc.
 
-If you are a beginner just playing around, follow the defaults except for maybe the next paragraph which will describe how to use multiple domain names with a single certificate.
+In order to use the certificate with multiple domain names, uncomment subjectAltName, [ alt\_names ], DNS.1 and DNS.2 and replace COMMON.NAME with the domain name set in req\_distinguished\_name and replace SECOND.NAME with the second name you want to use. You can also add more names with DNS.n where n is the next number. 
 
-In order to use the certificate with multiple domain names, uncomment subjectAltName, [ alt\_names ], DNS.1 and DNS.2 and replace COMMON.NAME with the domain name set in req\_distinguished\_name and replace SECOND.NAME with the second name you want to use. You can also add more names with DNS.n where n is the next number. You can also use wildcards in domain names to match all sub domains. eg you can set the common name to "\*.example.com" to match all of example.com's subdomains such as www.example.com, but it won't match example.com, you'll need to set a second DNS name for that.
-
-If you want to instead generate a csr and not a cert to get it signed by some CA just remove the -x509 option from the certificate generating command and the BasicConstraints line under v3_ca in openssl.cnf.
-
-If you won't be using multiple domain names nor generating a self signed CA cert, get rid of all their lines including the v3\_ca and x509\_extensions line
+You can also use wildcards in domain names to match all sub domains. eg you can set the common name to "\*.example.com" to match all of example.com's subdomains such as www.example.com, but it won't match example.com, you'll need to set a second DNS name for that.
 
 Next choose whether or not you want to use ECDSA or RSA as the algorithm behind your certificate. I'd recommend ECDSA because the key sizes are smaller, its faster, and more secure. But if for some reason you want RSA, it works perfectly fine.
 
