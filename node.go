@@ -229,16 +229,8 @@ func (n *node) server() error {
 		return tls.NewListener(tcpKeepAliveListener{ln.(*net.TCPListener), n.TCPKeepAliveInterval}, n.tlsConfig), err
 	}
 	n.dial = func() (c net.Conn, err error) {
-		c, err = net.Dial("tcp", n.Connect)
-		if err != nil {
-			return
-		}
-		err = c.(*net.TCPConn).SetKeepAlive(true)
-		if err != nil {
-			return
-		}
-		err = c.(*net.TCPConn).SetKeepAlivePeriod(n.TCPKeepAliveInterval)
-		return
+		d := &net.Dialer{KeepAlive: n.TCPKeepAliveInterval}
+		return d.Dial("tcp", n.Connect)
 	}
 	n.listenAndServe()
 	return nil
