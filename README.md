@@ -15,18 +15,24 @@ TLS wrapper in go! Wrap existing connections in TLS to bypass annoying DPI (deep
  * \#\#\# represents the TLS tunnel around the plain data
 
 ### Normal connections
-
-**client &nbsp; ---> &nbsp; server**
+<pre>
++----------+                                                    +----------+
+|          |                                                    |          |
+|  client  +----------------------------------------------------+  server  |
+|          |                                                    |          |
++----------+                                                    +----------+
+</pre>
 
 The link between the client and server is either insecure or it uses say SSH as the protocol which is picked up by Deep Packet Filtering and thus blocked. You can tunnel it instead through a goTunneLS tunnel which is encrypted via TLS, which makes it much less likely to be blocked by DPI as the entire web uses TLS, its far too restrictive for most networks and you should be able to get through!
 
 ### goTunneLS connections
-
+<pre>
 +----------+      +---------------+      +---------------+      +----------+
 |          |      |               +######+               |      |          |
 |  client  +------+  gTLS client  |------|  gTLS server  +------+  server  |
 |          |      |               +######+               |      |          |
 +----------+      +---------------+      +---------------+      +----------+
+</pre>
 
 Now the difference is that whatever the client sends to the gTLS client is forwarded over to the gTLS server and then finally over to the real server. The advantage here is that the gTLS client and gTLS server communicate via TLS thus protecting the data if the client/server communicate insecurely and also likely bypassing any DPI as TLS is almost never blocked.
 
