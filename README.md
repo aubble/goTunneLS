@@ -57,13 +57,38 @@ Now that you understand how it works, also know that its pure TLS, know that no 
 
 ## Configuration
 
-The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and then the path to the logFile. A neat simple example file, config.json, is included. Please read it, its very simple. Read [example](#example) for a little tutorial on using it and the rest of the program.
+The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and then the path to the logFile. A neat simple example file, config.json, is included.
 
-Anyways, each of these nodes in the array are either in server or client mode depending on the Mode field. Otherwise here is the list of fields you can set in all the nodes.
+{
+	"Nodes": [
+		{
+			"Name": "nc -l",
+			"Mode": "server",
+			"Accept": "5001",
+			"Connect": "5000",
+			"Cert": "tls/cert.pem",
+			"Key": "tls/key.pem"
+		},
+		{
+			"Name": "nc",
+			"Mode": "client",
+			"Accept": "5002",
+			"Connect": "5001",
+			"Cert": "tls/cert.pem"
+		}
+	],
+	"LogPath": "/dev/stdout"
+}
 
-Note that you can use relative file paths, relative to the config file. So say the config file is in /etc/goTunneLS. If the value of Cert is "cert.pem" that really means "/etc/goTunneLS/cert.pem" as its relative to the config file. The moment goTunneLS gets the name of the config file as the argument it changes its directory to it.
+Note: read [example](#example) for a little tutorial on using it and the rest of the program.
+
+First is the nodes array which consists of structs that represent the nodes to launch followed by LogPath to point to the logging file (/dev/stdout is standard output). The following section explains all the fields allowed in the structs representing nodes.
+
+Note: You can use relative file paths, relative to the config file. eg say the config file is in /etc/goTunneLS. If the value of the Cert field is "cert.pem" that really means "/etc/goTunneLS/cert.pem" as goTunneLS treats relative paths as relative to the config.json file.
 
 ###Fields
+
+When it says int just put a integer such as 10 for the value, otherwise the value is implied as a string.
 
 ####Required
 
@@ -78,9 +103,9 @@ Connect -- dial address; format is host:port. If host is missing, localhost is a
 
 ####Optional
 
-Timeout -- duration to sleep in seconds after network errors, default is 15
+Timeout -- int -- duration to sleep in seconds after network errors, default is 15
 
-TCPKeepAliveInterval -- interval between TCP keep alives in seconds, default is 15
+TCPKeepAliveInterval -- int -- interval between TCP keep alives in seconds, default is 15
 
 
 ####Required Server Fields
@@ -94,9 +119,9 @@ Key -- path to the key file of the Cert
 
 Issuer -- path to the issuer file of the cert. Only used in OCSP to validate the response.
 
-OCSPInterval -- interval between OCSP staple updates in seconds. Only applies when the OCSP responder has the most up to date information, otherwise the interval between OCSP staple updates will be until the next update. Default is 180
+OCSPInterval -- int --interval between OCSP staple updates in seconds. Only applies when the OCSP responder has the most up to date information, otherwise the interval between OCSP staple updates will be until the next update. Default is 180
 
-SessionKeyRotationInterval -- interval between session key rotation in seconds, default is 28800 or 8 hours
+SessionKeyRotationInterval -- int -- interval between session key rotation in seconds, default is 28800 or 8 hours
 
 
 ####Optional Client Options
@@ -105,7 +130,7 @@ Cert -- path to the RootCA for the certificate from the server. Useful when usin
 
 
 ###LogPath
-Outside of the array of nodes this is the other variable. It's the path to logFile. Created if doesn't exist, and if deleted during execution also recreated. Use /dev/stdout or /dev/stderr to output to terminal when needed.
+After the array of nodes we have the. It's the path to logFile. Created if doesn't exist, and if deleted during execution also recreated. Use /dev/stdout or /dev/stderr to output to terminal when needed.
 
 The format for logging is:
 
@@ -118,13 +143,14 @@ For example
 	goTunneLS: 2015/09/03 07:04:42 --> global -/ starting client node nc
 	goTunneLS: 2015/09/03 07:04:42 --> client nc -/ initializing
 
+
 ##Configuring Certificates and Keys
 TLS works with certificates and asymmetric cryptography. Lets first understand what that means. Skip this section if you already know how it all works and just want to get to generating the cert/key.
 
 ####Certificates?? Keys?? What does it all mean??
 Lets begin with symmetric cryptography, what you are likely used to. Symmetric cryptography both parties must know the key to decrypt/encrypt. However this is a problem on the web, you can't send the key over to the client to initiate a encrypted session. If someone is listening and they grab the key, your entire session can be very easily decrypted.
 
-This is where asymmetric cryptography comes into play. 
+This is where asymmetric cryptography comes into play. This type of crypto is based on the premise of special maths and algorithms that allow you to generate two keys with a special property. Anything decrypted with one key, can only be decrypted by the other key. Why is this crucial?
 
 ---
 
