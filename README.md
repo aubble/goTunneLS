@@ -72,7 +72,7 @@ Basically the server does the exact opposite. Listens on it's Accept address for
 
 ###Startup
 
-#####Linux
+####Linux
 //TODO get the file off the server
 I've included the goTunneLS.service file for systemd in linux. First copy it into /etc/systemd/system/
 
@@ -82,7 +82,7 @@ Now reload systemd with
 
 	sudo systemctl daemon-reload
 
-#####Mac
+####Mac
 I've included the goTunneLS.plist launch daemon file for launchctl in osx. First copy it into /Library/LaunchDaemons. Next change the first string of the ProgramArguments array to the absolute path of the goTunneLS executable on your system. Now if you need to specify the location of the config file, please do so on the third string tag. Otherwise delete the second and third tags
 
 Finally load it with
