@@ -18,7 +18,7 @@ If so you should be able to launch it as
 
 	goTunneLS
 
-Use the -c flag to point it to a config file, the default location it looks for is /etc/goTunneLS/config.json if no flag is provided.
+Use the -c flag to point it to a config file, the default location it looks for is /etc/goTunneLS/config.json.
 
 ####[How It Works](#how-it-works-1)
 High level overview of how the goTunneLS works with some neat diagrams.
@@ -30,7 +30,7 @@ Learn how to configure the program options as well as how to get it to run as a 
 If you want to understand how certificates work and how to generate your own certificates to use.
 
 ####[Example](#example-1)
-An easy to follow example to understand how the program works. Works along side the included config.json file.
+An easy to follow example to understand how the program works. Works along side the included config.json and cert. **Do not actually use this cert in a real scenerio, please generate a new one, its described in the above section**
 
 **If you're a newbie, read all of the documentation I've wrote specifically for you to get you to not only use it effectivley but also understand how it works!**
 
