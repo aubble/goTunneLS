@@ -65,11 +65,11 @@ Now the difference is that whatever the client sends to the gTLS client is forwa
 Now that you understand how it works, also know that its pure TLS, know that no other protocol is being used other than TLS to tunnel so its not necessary to use both the server and client. If a application communicates via TLS but the other does not, you only need to wrap insecure one. Thus it can also act as a proxy.
 
 #### gTLS Client
-Basically the client listens on it's Accept address for plain TCP connections and proxies them to its Connect address via TLS and TCP.
+Basically the client listens on it's Accept address for plain connections and proxies them to its Connect address via TLS.
 
 #### gTLS Server
 
-Basically the server does the exact opposite. Listens on it's Accept address for TLS TCP connections and proxies them to its Connect address via plain TCP.
+Basically the server does the exact opposite. Listens on it's Accept address for TLS connections and proxies them to its Connect address via a plain connection.
 
 
 ## Configuration
@@ -272,7 +272,7 @@ Leave that nc running and open a new terminal. Now run
 
 This makes nc dial port 5002 on localhost. Now when you type anything into the nc terminal, and press enter it appears on the other nc instance running in the other terminal! but wait.... the port numbers are different how could this be, how are they connected??? Thats goTunneLS doing its magic.
 
-In that configuration file there are two goTunneLS "nodes" defined, 1 server and 1 client. The client's Listen address is port 5002 and Connect is to port 5001. This means it accepts plain TCP connections on port 5002 and proxies them to port 5001 with TLS TCP. The Server's listen address is port 5001, and Connect address is port 5000. This means it accepts TLS TCP connections on port 5001 and proxies them to port 5000 with plain TCP.
+In that configuration file there are two goTunneLS "nodes" defined, 1 server and 1 client. The client's Listen address is port 5002 and Connect is to port 5001. This means it accepts plain connections on port 5002 and proxies them to port 5001 with TLS. The Server's listen address is port 5001, and Connect address is port 5000. This means it accepts TLS connections on port 5001 and proxies them to port 5000 with plain connections.
 
 The entire ordeal looks as follow.
 
