@@ -6,6 +6,8 @@
 
 goTunneLS is a TLS wrapper/proxy in go. Wrap existing connections in TLS to bypass annoying DPI (deep packet filtering) from blocking your connections in other protocols or just secure insecure connections. It can also act as a proxy for an application that doesn't use TLS.
 
+**If you're a newbie, read all of the documentation I've wrote specifically for you to get you to not only use it effectivley but also understand how it works!**
+
 ## Install
 
 Go 1.5 only so make sure you have it installed and configured correctly.
@@ -30,9 +32,10 @@ Learn how to configure the program options as well as how to get it to run as a 
 If you want to understand how certificates work and how to generate your own certificates to use.
 
 ####[Example](#example-1)
-An easy to follow example to understand how the program works. Works along side the included config.json and cert. **Do not actually use this cert in a real scenerio, please generate a new one, its described in the above section**
+An easy to follow example to understand how the program works. Works along side the included config.json and certificate/key.
 
-**If you're a newbie, read all of the documentation I've wrote specifically for you to get you to not only use it effectivley but also understand how it works!**
+**Do not actually use this cert in a real scenerio, please generate a new one, its described in the above section**
+
 
 ## How it works
 
