@@ -65,9 +65,9 @@ The link between the client and server is either insecure or maybe it uses SSH a
 
 Now the difference is that whatever the client sends to the gTLS client is forwarded over to the gTLS server and then finally over to the real server. The advantage here is that the gTLS client and gTLS server communicate via TLS thus protecting the data if the client/server communicate insecurely and also likely bypassing any DPI as TLS is almost never blocked.
 
-Now that you understand how it works, also know that its pure TLS, know that no other protocol is being used other than TLS to tunnel so its not necessary to use both the server and client. If a application communicates via TLS but the other does not, you only need to wrap insecure one. Thus it can also act as a proxy.
+Now that you understand how it works, also know that its pure TLS, know that no other protocol is being used other than TLS to tunnel so its not necessary to use both the server and client. If a application communicates via TLS but the other does not, you only need to wrap insecure one. Thus it can also act as just a proxy.
 
-[Here](http://pastebin.com/raw.php?i=AhVrKVr7) is also a diagram of how SSH tunneling can be tunneled through goTunneLS. % represents the ssh tunneel.
+[Here](http://pastebin.com/raw.php?i=AhVrKVr7) is a diagram of how SSH tunneling can be tunneled through goTunneLS. % represents the ssh tunnel. Use dynamic port forwarding and bam, you got yourself a SOCKS5 proxy being tunneled through TLS, perfect for web browsering without any restrictions!
 
 #### gTLS Client
 Basically the client listens on it's Accept address for plain connections and proxies them to its Connect address via TLS.
