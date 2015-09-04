@@ -214,6 +214,7 @@ func (n *node) server() error {
 	go func() {
 		for {
 			n.tlsConfig.SetSessionTicketKeys(keys)
+			n.logln("session key rotation sleeping for", n.SessionKeyRotationInterval/time.Second)
 			time.Sleep(n.SessionKeyRotationInterval)
 			n.logln("updating session ticket rotation keys")
 			keys[0] = keys[1]
