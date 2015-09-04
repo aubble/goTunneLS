@@ -133,6 +133,7 @@ type tcpKeepAliveListener struct {
 	tcpKeepAliveInterval time.Duration
 }
 
+// Accept a TCP Conn and enable TCP keep alive
 func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
 	tc, err := ln.AcceptTCP()
 	if err != nil {

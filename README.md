@@ -74,6 +74,7 @@ Basically the client listens on it's Accept address for plain connections and pr
 
 Basically the server does the exact opposite. Listens on it's Accept address for TLS connections and proxies them to its Connect address via a plain connection.
 
+[Here](http://pastebin.com/raw.php?i=AhVrKVr7) is also a diagram of how SSH tunneling can be tunneled through goTunneLS
 
 ## Configuration
 
@@ -110,7 +111,7 @@ First is the Nodes array which consists of structs that represent the nodes to l
 
 You can use relative file paths, relative to the config file. eg say the config file is in /etc/goTunneLS. If the value of the Cert field is "cert.pem" that really means "/etc/goTunneLS/cert.pem"
 
-When it says int just put a integer such as 10 for the value, otherwise the value is implied as a string.
+When it says int just put a integer such as 10 for the value with no quotes, otherwise the value is implied as a string, eg whatever value with quotes.
 
 Don't bother with the optional fields if you don't care, they aren't necessary. Most people likely only want to use the required fields.
 
@@ -186,7 +187,7 @@ Next enable it to start at boot with
 	sudo systemctl enable goTunneLS
 
 ####Mac
-I've included the goTunneLS.plist launch daemon file for launchctl in osx. First copy it into /Library/LaunchDaemons. Next change the first string of the ProgramArguments array to the absolute path of the goTunneLS executable on your system. Now if you need to specify the location of the config file, please do so on the third string tag. Otherwise delete the second and third tags
+I've included the goTunneLS.plist launch daemon file for launchctl in osx. First copy it into /Library/LaunchDaemons. Next change the first string tag of the ProgramArguments array to the absolute path of the goTunneLS executable on your system. Now if you need to specify the location of the config file, please do so on the third string tag. Otherwise delete the second and third string tags.
 
 Finally load it with
 
