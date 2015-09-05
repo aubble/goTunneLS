@@ -21,7 +21,7 @@ func main() {
 	log.SetPrefix("goTunneLS: ")
 	// read and parse config file
 	var path string
-	flag.StringVar(&path, "c", "/etc/goTunneLS/config.json", "path to configuration file")
+	flag.StringVar(&path, "c", "/usr/local/etc/goTunneLS/config.json", "path to configuration file")
 	flag.Parse()
 	gTLS := new(goTunneLS)
 	gTLS.parseFile(path)

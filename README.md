@@ -20,7 +20,7 @@ If so you should be able to launch it as
 
 	goTunneLS
 
-Use the -c flag to point it to a config file, the default location it looks for is /etc/goTunneLS/config.json.
+Use the -c flag to point it to a config file, the default location it looks for is /usr/local/etc/goTunneLS/config.json.
 
 ####[How It Works](#how-it-works-1)
 High level overview of how the goTunneLS works with some neat diagrams.
@@ -110,7 +110,7 @@ First is the Nodes array which consists of structs that represent the nodes to l
 
 ###Fields
 
-You can use relative file paths, relative to the config file. eg say the config file is in /etc/goTunneLS. If the value of the Cert field is "cert.pem" that really means "/etc/goTunneLS/cert.pem"
+You can use relative file paths, relative to the config file. eg say the config file is in /usr/local/etc/goTunneLS. If the value of the Cert field is "cert.pem" that really means "/usr/local/etc/goTunneLS/cert.pem"
 
 When it says int just put a integer such as 10 for the value with no quotes, otherwise the value is implied as a string, eg whatever value with quotes.
 
@@ -174,7 +174,7 @@ In order to launch goTunneLS at boot with your OS of choice follow the instructi
 ####Linux
 I've included a goTunneLS.service file for systemd in linux. First copy it into /etc/systemd/system/
 
-Next change the ExecStart field in goTunneLS.service to the absolute path of the goTunneLS executable on your system. Next remove the -c flag if the goTunneLS config file is in /etc/goTunneLS/config.json, otherwise please add in the absolute path to the config file.
+Next change the ExecStart field in goTunneLS.service to the absolute path of the goTunneLS executable on your system. Next remove the -c flag if the goTunneLS config file is in /usr/local/etc/goTunneLS/config.json, otherwise please add in the absolute path to the config file.
 
 Now reload systemd with
 
