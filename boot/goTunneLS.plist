@@ -8,7 +8,7 @@
 		<array>
 			<string>/usr/local/bin/goTunneLS</string>
 			<string>-c</string>
-			<string>/etc/goTunneLS/config.json</string>
+			<string>/usr/local/etc/goTunneLS/config.json</string>
 		</array>
 		<key>KeepAlive</key>
 		<true/>

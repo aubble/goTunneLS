@@ -4,7 +4,7 @@ Wants=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/usr/local/bin/goTunneLS -c /etc/goTunneLS/config.json
+ExecStart=/usr/local/bin/goTunneLS -c /usr/local/etc/goTunneLS/config.json
 Restart=on-failure
 RestartSec=30
 
