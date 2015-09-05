@@ -147,7 +147,7 @@ Issuer -- path to the issuer file of the cert. Only used in OCSP to validate the
 
 OCSPInterval -- int --interval between OCSP staple updates in seconds. Only applies when the OCSP responder has the most up to date information, otherwise the interval between OCSP staple updates will be until the next update. Default is 180.
 
-SessionKeyRotationInterval -- int -- interval between session key rotation in seconds, default is 28800 or 8 hours.
+SessionTicketKeyRotationInterval -- int -- interval between session key rotation in seconds, default is 28800 or 8 hours.
 
 
 ####Optional Client Options

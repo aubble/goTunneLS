@@ -44,16 +44,16 @@ type node struct {
 	// tls configuration
 	tlsConfig *tls.Config
 
-	// Duration for sleep after network error in seconds
+	// Duration for sleep after network error in seconds, default is 15
 	Timeout time.Duration
 
-	// interval between OCSP staple updates in seconds. Only applies when OCSP responder has most up to date information, otherwise the interval is until the next update
+	// interval between OCSP staple updates in seconds. Only applies when OCSP responder has most up to date information, otherwise the interval is until the next update. Default is 180
 	OCSPInterval time.Duration
 
-	// interval between session ticket key rotations in seconds
-	SessionKeyRotationInterval time.Duration
+	// interval between session ticket key rotations in seconds, default is 28800 or 8 hours
+	SessionTicketKeyRotationInterval time.Duration
 
-	// tcp keep alive interval in seconds
+	// tcp keep alive interval in seconds, default is 15
 	TCPKeepAliveInterval time.Duration
 
 	// wg for the copy goroutines, to write logs in sync after they exit
@@ -89,8 +89,8 @@ func (n *node) run() {
 	if n.OCSPInterval == 0 {
 		n.OCSPInterval = 180
 	}
-	if n.SessionKeyRotationInterval == 0 {
-		n.SessionKeyRotationInterval = 28800
+	if n.SessionTicketKeyRotationInterval == 0 {
+		n.SessionTicketKeyRotationInterval = 28800
 	}
 	if n.TCPKeepAliveInterval == 0 {
 		n.TCPKeepAliveInterval = 15
@@ -98,7 +98,7 @@ func (n *node) run() {
 	// calculate real time.Duration for time fields
 	n.Timeout *= time.Second
 	n.OCSPInterval *= time.Second
-	n.SessionKeyRotationInterval *= time.Second
+	n.SessionTicketKeyRotationInterval *= time.Second
 	n.TCPKeepAliveInterval *= time.Second
 	// set mutual TLSConfig fields
 	n.tlsConfig = new(tls.Config)
@@ -215,8 +215,8 @@ func (n *node) server() error {
 	go func() {
 		for {
 			n.tlsConfig.SetSessionTicketKeys(keys)
-			n.logf("session key rotation sleeping for %vs", float64(n.SessionKeyRotationInterval/time.Second))
-			time.Sleep(n.SessionKeyRotationInterval)
+			n.logf("session ticket key rotation loop sleeping for %vs", float64(n.SessionTicketKeyRotationInterval/time.Second))
+			time.Sleep(n.SessionTicketKeyRotationInterval)
 			n.logln("updating session ticket rotation keys")
 			keys[0] = keys[1]
 			keys[1] = keys[2]
@@ -348,6 +348,6 @@ func (n *node) logln(v ...interface{}) {
 // arguments are handled same as fmt.Printf
 func (n *node) logf(format string, v ...interface{}) {
 	if logger.Logger != nil {
-		logger.printf("--> "+n.Mode + n.Name+" -/ "+format, v...)
+		logger.printf("--> "+n.Mode+n.Name+" -/ "+format, v...)
 	}
 }
