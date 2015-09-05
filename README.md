@@ -151,7 +151,6 @@ SessionKeyRotationInterval -- int -- interval between session key rotation in se
 
 
 ####Optional Client Options
-
 Cert -- path to the RootCA for the certificate from the server. Useful when using self signed certificates (like below) that are not in the operating systems store, you must use this option to point to the RootCA in those cases or you'll get a nasty error about the certificate not being trusted.
 
 
@@ -173,22 +172,22 @@ For example
 In order to launch goTunneLS at boot with your OS of choice follow the instructions. The boot files are located in the boot folder.
 
 ####Linux
-//TODO get the file off the server
-
 I've included a goTunneLS.service file for systemd in linux. First copy it into /etc/systemd/system/
 
-Next change the ExecStart field in goTunneLS.service to the absolute path of the goTunneLS executable on your system. Finally add the -c flag if needed to point to the location of the config file if it isn't /etc/goTunneLS/config.json.
+Next change the ExecStart field in goTunneLS.service to the absolute path of the goTunneLS executable on your system. Next remove the -c flag if the goTunneLS config file is in /etc/goTunneLS/config.json, otherwise please add in the absolute path to the config file.
 
 Now reload systemd with
 
 	sudo systemctl daemon-reload
 
-Next enable it to start at boot with
+Finally enable it to start at boot with
 
 	sudo systemctl enable goTunneLS
 
 ####Mac
-I've included the goTunneLS.plist launch daemon file for launchctl in osx. First copy it into /Library/LaunchDaemons. Next change the first string tag of the ProgramArguments array to the absolute path of the goTunneLS executable on your system. Now if you need to specify the location of the config file, please do so on the third string tag. Otherwise delete the second and third string tags.
+I've included the goTunneLS.plist launch daemon file for launchd in osx. First copy it into /Library/LaunchDaemons. Next change the first string tag of the ProgramArguments array to the absolute path of the goTunneLS executable on your system.
+
+Now if you need to specify the location of the config file, please do so on the third tag. Otherwise delete the second and third tags.
 
 Finally load it with
 

@@ -1,0 +1,12 @@
+[Unit]
+Description=go TLS wrapper
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/goTunneLS -c /etc/goTunneLS/config.json
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

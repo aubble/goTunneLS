@@ -6,12 +6,14 @@
 		<string>goTunneLS</string>
 		<key>ProgramArguments</key>
 		<array>
-			<string>absolute path to golang executable</string>
+			<string>/usr/local/bin/goTunneLS</string>
 			<string>-c</string>
-			<string>absolute path to the config file</string>
+			<string>/etc/goTunneLS/config.json</string>
 		</array>
 		<key>KeepAlive</key>
 		<true/>
+		<key>ThrottleInterval</key>
+		<integer>30</integer>
 		<key>RunAtLoad</key>
 		<true/>
 	</dict>
