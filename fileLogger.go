@@ -51,7 +51,7 @@ func (l fileLogger) printf(format string, v ...interface{}) {
 		l.checkIfExist()
 		l.Printf(format, v...)
 	}
-	log.Println(v...)
+	log.Printf(format, v...)
 }
 
 // closes the logFile associated with the logger
