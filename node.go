@@ -129,8 +129,11 @@ func (n *node) run() {
 // tcpKeepAliveListener wraps a TCPListener to
 // activate TCP keep alive on every accepted connection
 type tcpKeepAliveListener struct {
+	// inner TCPlistener
 	*net.TCPListener
-	tcpKeepAliveInterval time.Duration
+
+	// interval between keep alives to set on accepted conns
+	keepAliveInterval time.Duration
 }
 
 // Accept a TCP Conn and enable TCP keep alive
@@ -143,7 +146,7 @@ func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
 	if err != nil {
 		return
 	}
-	err = tc.SetKeepAlivePeriod(ln.tcpKeepAliveInterval)
+	err = tc.SetKeepAlivePeriod(ln.keepAliveInterval)
 	if err != nil {
 		return
 	}
@@ -339,11 +342,11 @@ func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 // logln logs to the global fileLogger as global
 // arguments are handled same as fmt.Println
 func (n *node) logln(v ...interface{}) {
-		logger.println(append([]interface{}{"-->", n.Mode + n.Name, "-/"}, v...)...)
+	logger.println(append([]interface{}{"-->", n.Mode + n.Name, "-/"}, v...)...)
 }
 
 // logf logs to the global fileLogger as global
 // arguments are handled same as fmt.Printf
 func (n *node) logf(format string, v ...interface{}) {
-		logger.printf("--> "+n.Mode+n.Name+" -/ "+format, v...)
+	logger.printf("--> "+n.Mode+n.Name+" -/ "+format, v...)
 }

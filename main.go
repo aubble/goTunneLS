@@ -31,14 +31,15 @@ func main() {
 			log.Fatalln("--> global -/", err)
 		}
 	}
-	// setup logging
-	log.SetFlags(0)
+	// setup file logging
 	if gTLS.LogPath != "" {
 		logger.logPath = gTLS.LogPath
-		logFile, err := os.OpenFile(gTLS.LogPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+		logFile, err := os.OpenFile(gTLS.LogPath, os.O_WRONLY|os.O_APPEND, 0644)
 		if err != nil {
 			log.Fatalln("--> global -/", err)
 		}
+		log.SetFlags(0)
+		log.SetPrefix("")
 		logger.Logger = log.New(logFile, "goTunneLS: ", 3)
 		logger.logFile = &logFile
 		sigs := make(chan os.Signal, 1)

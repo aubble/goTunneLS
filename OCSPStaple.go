@@ -15,11 +15,22 @@ import (
 
 // OCSPCert represents a tls.Certificate that has its OCSPStaple field constantly updated
 type OCSPCert struct {
+	// inner certificate to modify
 	cert       *tls.Certificate
+
+	// request to send to OCSP responder
 	req        []byte
+
+	// issuer of cert to verify OCSP response
 	issuer     *x509.Certificate
+
+	// time until checking OCSP responder again
 	nextUpdate time.Time
+
+	// for concurrent access
 	sync.RWMutex
+
+	// spawning node for logging purposes
 	n *node
 }
 
