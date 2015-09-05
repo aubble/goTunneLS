@@ -339,15 +339,11 @@ func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 // logln logs to the global fileLogger as global
 // arguments are handled same as fmt.Println
 func (n *node) logln(v ...interface{}) {
-	if logger.Logger != nil {
 		logger.println(append([]interface{}{"-->", n.Mode + n.Name, "-/"}, v...)...)
-	}
 }
 
 // logf logs to the global fileLogger as global
 // arguments are handled same as fmt.Printf
 func (n *node) logf(format string, v ...interface{}) {
-	if logger.Logger != nil {
 		logger.printf("--> "+n.Mode+n.Name+" -/ "+format, v...)
-	}
 }

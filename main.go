@@ -32,6 +32,7 @@ func main() {
 		}
 	}
 	// setup logging
+	log.SetFlags(0)
 	if gTLS.LogPath != "" {
 		logger.logPath = gTLS.LogPath
 		logFile, err := os.OpenFile(gTLS.LogPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)

@@ -37,15 +37,21 @@ func (l fileLogger) checkIfExist() {
 // first checks to make sure file exists
 // then prints arguements as fmt.Println
 func (l fileLogger) println(v ...interface{}) {
-	l.checkIfExist()
-	l.Println(v...)
+	if l.Logger != nil {
+		l.checkIfExist()
+		l.Println(v...)
+	}
+	log.Println(v...)
 }
 
 // first checks to make sure file exists
 // then prints arguements as fmt.Printf
 func (l fileLogger) printf(format string, v ...interface{}) {
-	l.checkIfExist()
-	l.Printf(format, v...)
+	if l.Logger != nil {
+		l.checkIfExist()
+		l.Printf(format, v...)
+	}
+	log.Println(v...)
 }
 
 // closes the logFile associated with the logger

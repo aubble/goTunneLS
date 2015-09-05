@@ -1,5 +1,5 @@
 [Unit]
-Description=go TLS wrapper
+Description=goTunneLS TLS proxy
 Wants=network-online.target
 After=network-online.target
 

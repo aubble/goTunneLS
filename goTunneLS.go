@@ -28,15 +28,11 @@ func (gTLS *goTunneLS) parseFile(path string) {
 // logln logs to the global fileLogger as global
 // arguements are handled same as fmt.Println
 func (gTLS *goTunneLS) logln(v ...interface{}) {
-	if logger.Logger != nil {
 		logger.println(append([]interface{}{"--> global -/"}, v...)...)
-	}
 }
 
 // logf logs to the global fileLogger as global
 // arguements are handled same as fmt.Printf
 func (gTLS *goTunneLS) logf(format string, v ...interface{}) {
-	if logger.Logger != nil {
 		logger.printf("--> global -/ "+format, v...)
-	}
 }
