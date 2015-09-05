@@ -16,13 +16,13 @@ import (
 // OCSPCert represents a tls.Certificate that has its OCSPStaple field constantly updated
 type OCSPCert struct {
 	// inner certificate to modify
-	cert       *tls.Certificate
+	cert *tls.Certificate
 
 	// request to send to OCSP responder
-	req        []byte
+	req []byte
 
 	// issuer of cert to verify OCSP response
-	issuer     *x509.Certificate
+	issuer *x509.Certificate
 
 	// time until checking OCSP responder again
 	nextUpdate time.Time
@@ -84,7 +84,7 @@ func (OCSPC *OCSPCert) updateStaple() error {
 func (OCSPC *OCSPCert) updateStapleLoop() {
 	for {
 		if err := OCSPC.updateStaple(); err == nil {
-			OCSPC.n.logf("OCSP staple loop sleeping for %vs", OCSPC.nextUpdate.Sub(time.Now()).Seconds(),)
+			OCSPC.n.logf("OCSP staple loop sleeping for %vs", OCSPC.nextUpdate.Sub(time.Now()).Seconds())
 			time.Sleep(OCSPC.nextUpdate.Sub(time.Now()))
 		} else {
 			if time.Now().After(OCSPC.nextUpdate) {
