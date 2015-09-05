@@ -51,6 +51,7 @@ func main() {
 			os.Exit(1)
 		}()
 	}
+	return
 	// launch nodes and wait for their return
 	var nodeWG sync.WaitGroup
 	nodeWG.Add(len(gTLS.Nodes))

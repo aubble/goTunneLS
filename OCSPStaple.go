@@ -73,7 +73,7 @@ func (OCSPC *OCSPCert) updateStaple() error {
 func (OCSPC *OCSPCert) updateStapleLoop() {
 	for {
 		if err := OCSPC.updateStaple(); err == nil {
-			OCSPC.n.logln("stapleLoop: sleeping for", OCSPC.nextUpdate.Sub(time.Now()).Seconds())
+			OCSPC.n.logf("stapleLoop sleeping for %ss", OCSPC.nextUpdate.Sub(time.Now()).Seconds(),)
 			time.Sleep(OCSPC.nextUpdate.Sub(time.Now()))
 		} else {
 			if time.Now().After(OCSPC.nextUpdate) {
@@ -82,7 +82,7 @@ func (OCSPC *OCSPCert) updateStapleLoop() {
 				OCSPC.Unlock()
 			}
 			OCSPC.n.logln(err)
-			OCSPC.n.logln("stapleLoop: sleeping for", int64(OCSPC.n.Timeout))
+			OCSPC.n.logf("stapleLoop sleeping for %ss", int64(OCSPC.n.Timeout/time.Second))
 			time.Sleep(OCSPC.n.Timeout)
 		}
 	}
