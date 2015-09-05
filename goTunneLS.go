@@ -10,7 +10,8 @@ import (
 type goTunneLS struct {
 	// slice of the configured nodes to launch
 	Nodes []*node
-	// path to the logFile, use /dev/stdout for standard output and /dev/stderr for standard error
+
+	// path to the logFile
 	LogPath string
 }
 

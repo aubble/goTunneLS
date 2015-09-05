@@ -3,18 +3,17 @@
 		{
 			"Name": "nc -l",
 			"Mode": "server",
-			"Accept": "5001",
-			"Connect": "5000",
+			"Accept": "localhost:5001",
+			"Connect": "localhost:5000",
 			"Cert": "tls/cert.pem",
 			"Key": "tls/key.pem"
 		},
 		{
 			"Name": "nc",
 			"Mode": "client",
-			"Accept": "5002",
-			"Connect": "5001",
+			"Accept": "localhost:5002",
+			"Connect": "localhost:5001",
 			"Cert": "tls/cert.pem"
 		}
-	],
-	"LogPath": "/dev/stderr"
+	]
 }

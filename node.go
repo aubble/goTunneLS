@@ -30,7 +30,6 @@ type node struct {
 	// dial address
 	Connect string
 
-	// TODO multiple certs and SNI
 	// TODO also look at SignedCertificateTimestamps
 	// path to cert
 	Cert string
@@ -40,9 +39,6 @@ type node struct {
 
 	// path to issuer of cert for OCSP
 	Issuer string
-
-	// tls configuration
-	tlsConfig *tls.Config
 
 	// Duration for sleep after network error in seconds, default is 15
 	Timeout time.Duration
@@ -55,6 +51,9 @@ type node struct {
 
 	// tcp keep alive interval in seconds, default is 15
 	TCPKeepAliveInterval time.Duration
+
+	// tls configuration
+	tlsConfig *tls.Config
 
 	// wg for the copy goroutines, to write logs in sync after they exit
 	copyWG sync.WaitGroup
