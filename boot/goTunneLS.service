@@ -5,7 +5,7 @@ After=network-online.target
 
 [Service]
 ExecStart=/usr/local/bin/goTunneLS -c /usr/local/etc/goTunneLS/config.json
-Restart=on-failure
+Restart=always
 RestartSec=30
 
 [Install]

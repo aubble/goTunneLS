@@ -101,7 +101,7 @@ The configuration file's syntax is JSON and it consists of an array of the nodes
 				"Cert": "tls/cert.pem"
 			}
 		],
-		"LogPath": "/dev/stdout"
+		"LogPath": "/dev/stderr"
 	}
 
 Note: read [example](#example-1) for a hands on tutorial on using config.json and the rest of the program.
@@ -155,7 +155,7 @@ Cert -- path to the RootCA for the certificate from the server. Useful when usin
 
 
 ####LogPath
-It's the path to logFile. Created if doesn't exist, and if deleted during execution also recreated. Use /dev/stdout or /dev/stderr to output to terminal when needed.
+It's the path to logFile. Created if doesn't exist, and if deleted during execution also recreated. Use /dev/stderr to output to terminal when needed. You can also use /dev/stdout but /dev/stderr just makes more sense.
 
 The format for logging is:
 
@@ -291,7 +291,7 @@ The entire ordeal looks as follow.
 
 Hopefully it makes more sense now to you. nc does everything over plain text and goTunneLS allows you to wrap its insecure connection in TLS. You can take out the server node of the config.json, and take it and actually run it on a server somewhere, just change the Connect address of the client node to the new servers listening address and everything will work the same. Quite fun right? :P
 
-Read the log messages from goTunneLS, you can see what its doing, the tunnels its creating, the certificates its loading, errors etc. I've used /dev/stdout as the logPath in config.json to output to standard output but you can make it a file in the current directory by setting it to "logs". Try it!
+Read the log messages from goTunneLS, you can see what its doing, the tunnels its creating, the certificates its loading, errors etc. I've used /dev/stderr as the logPath in config.json to output to standard err but you can make it a file in the current directory by setting it to "logs". Try it!
 
 Note: The client and server are configured with a default self signed certificate I've provided. When actually using this program for real purposes, please look at the [Configuring Certificates and Keys](#configuring-certificates-and-keys-1) section to generate a new key pair. Anyone who has this key.pem file can decrypt your communications (the configuring certificates section also includes a small introduction, please read it if you do not know what I mean).
 

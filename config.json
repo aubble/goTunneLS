@@ -16,5 +16,5 @@
 			"Cert": "tls/cert.pem"
 		}
 	],
-	"LogPath": "/dev/stdout"
+	"LogPath": "/dev/stderr"
 }
