@@ -215,7 +215,7 @@ func (n *node) server() error {
 	go func() {
 		for {
 			n.tlsConfig.SetSessionTicketKeys(keys)
-			n.logf("session key rotation sleeping for %ss", int64(n.SessionKeyRotationInterval/time.Second))
+			n.logf("session key rotation sleeping for %vs", float64(n.SessionKeyRotationInterval/time.Second))
 			time.Sleep(n.SessionKeyRotationInterval)
 			n.logln("updating session ticket rotation keys")
 			keys[0] = keys[1]
@@ -286,7 +286,7 @@ func (n *node) client() error {
 func (n *node) listenAndServe() {
 	handleError := func(err error) {
 		n.logln(err)
-		n.logf("sleeping for %ss", int64(n.Timeout/time.Second))
+		n.logf("sleeping for %vs", float64(n.Timeout/time.Second))
 		time.Sleep(n.Timeout)
 	}
 	listenAndServeErr := func() error {
