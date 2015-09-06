@@ -246,7 +246,7 @@ First open openssl.cnf and modify the req\_distinguished\_name to fit your likin
 
 In order to use the certificate with multiple domain names, uncomment subjectAltName, [ alt\_names ], DNS.1 and DNS.2 and replace COMMON.NAME with the domain name set in req\_distinguished\_name and replace SECOND.NAME with the second name you want to use. You can also add more names with DNS.n where n is the next number.
 
-You can also use wildcards in domain names to match all sub domains. eg you can set the common name to "\*.example.com" to match all of example.com's subdomains such as www\.example\.com, but it won't match example.com, you'll need to set second DNS name for that as in the above paragraph.
+You can also use wildcards in domain names to match all sub domains. eg you can set the common name to "\*.example.com" to match all of example.com's subdomains such as www.example.com, but it won't match example.com, you'll need to set second DNS name for that as in the above paragraph.
 
 Next choose whether or not you want to use ECDSA or RSA as the algorithm behind your certificate. I'd recommend ECDSA because the key sizes are smaller, its faster, and more secure. But if for some reason you want RSA, it works perfectly fine.
 
@@ -308,7 +308,9 @@ Hopefully it makes more sense now to you. nc does everything over plain text and
 
 Read the log messages from goTunneLS, you can see what its doing, the tunnels its creating, the certificates its loading, errors etc. Logging is always done to stderr, but you can set a seperate logging file with the LogPath option. I've used /dev/null as LogPath to have it not log to a file. Setting it to /dev/null is the same as not having but, but I set it to demonstrate the option. Set LogPath to "logs" to have logging done to a file called logs in the same directory as config.json. Go ahead and try it!
 
-Note: StdErrPrefixLogging set to true is needed for timestamps on the logging to stderr (stderr is connected to your terminal). By default this option is off so stderr logs don't have the timestamp and name goTunneLS as a prefix, this allows for better integration with systemd's journal and the like which usually have their own timestamp information on stderr logs. See [StdErrPrefixLogging](#stderrprefixlogging) for more information.
+Note: StdErrPrefixLogging set to true is needed for timestamps on the logging to stderr (stderr is connected to your terminal). By default this option is off so stderr logs don't have the timestamp and name goTunneLS as a prefix, this allows for better integration with systemd's journal and the like which usually have their own timestamp information on stderr logs.
+
+See [StdErrPrefixLogging](#stderrprefixlogging) for more information.
 
 Note: The client and server are configured with a default self signed certificate I've provided. When actually using this program for real purposes, please look at the [Configuring Certificates and Keys](#configuring-certificates-and-keys-1) section to generate a new key pair. Anyone who has this key.pem file can decrypt your communications (the configuring certificates section also includes a small introduction, please read it if you do not know what I mean).
 
