@@ -1,20 +1,21 @@
 {
 	"Nodes": [
 		{
+			"Name": "nc",
+			"Mode": "client",
+			"Accept": "localhost:5002",
+			"Connect": "localhost:5001",
+			"Cert": "tls/cert.pem"
+		},
+		{
 			"Name": "nc -l",
 			"Mode": "server",
 			"Accept": "localhost:5001",
 			"Connect": "localhost:5000",
 			"Cert": "tls/cert.pem",
 			"Key": "tls/key.pem"
-		},
-		{
-			"Name": "nc",
-			"Mode": "client",
-			"Accept": "localhost:5002",
-			"Connect": "localhost:5001",
-			"Cert": "tls/cert.pem"
 		}
+
 	],
 	"LogPath": "/dev/null",
 	"StdErrPrefixLogging": true

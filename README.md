@@ -86,20 +86,21 @@ The configuration file's syntax is JSON and it consists of an array of the nodes
 	{
 		"Nodes": [
 			{
+				"Name": "nc",
+				"Mode": "client",
+				"Accept": "localhost:5002",
+				"Connect": "localhost:5001",
+				"Cert": "tls/cert.pem"
+			},
+			{
 				"Name": "nc -l",
 				"Mode": "server",
 				"Accept": "localhost:5001",
 				"Connect": "localhost:5000",
 				"Cert": "tls/cert.pem",
 				"Key": "tls/key.pem"
-			},
-			{
-				"Name": "nc",
-				"Mode": "client",
-				"Accept": "localhost:5002",
-				"Connect": "localhost:5001",
-				"Cert": "tls/cert.pem"
 			}
+
 		],
 		"LogPath": "/dev/null",
 		"StdErrPrefixLogging": true
@@ -107,7 +108,7 @@ The configuration file's syntax is JSON and it consists of an array of the nodes
 
 Note: read [example](#example-1) for a hands on tutorial on using config.json and the rest of the program.
 
-First is the Nodes array which consists of structs that represent the nodes to launch followed by LogPath to point to the logging file. The following section explains all the fields allowed in the structs representing nodes as well as an explanation of LogPath and StdErrPrefixLogging.
+First is the Nodes array which consists of structs that represent the nodes to launch followed by LogPath which points to the LogFIle and StdErrPrefixLogging which controls whether or not to output the prefix in the logging to stderr. The following section explains all the fields allowed in the structs representing nodes as well as an explanation of LogPath and StdErrPrefixLogging.
 
 ###Fields
 
