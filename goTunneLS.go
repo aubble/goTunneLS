@@ -13,6 +13,9 @@ type goTunneLS struct {
 
 	// path to the logFile
 	LogPath string
+
+	// controls whether or not to have timestamps/prefix on the stderr logging
+	StdErrPrefixLogging bool
 }
 
 // read config file into gTLS

@@ -38,8 +38,6 @@ func main() {
 		if err != nil {
 			log.Fatalln("--> global -/", err)
 		}
-		log.SetFlags(0)
-		log.SetPrefix("")
 		logger.Logger = log.New(logFile, "goTunneLS: ", 3)
 		logger.logFile = &logFile
 		sigs := make(chan os.Signal, 1)
@@ -52,6 +50,11 @@ func main() {
 			logger.close()
 			os.Exit(1)
 		}()
+	}
+	// set stderr prefix/timestamps
+	if gTLS.StdErrPrefixLogging == false {
+		log.SetFlags(0)
+		log.SetPrefix("")
 	}
 	// launch nodes and wait for their return
 	var nodeWG sync.WaitGroup

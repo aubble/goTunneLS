@@ -88,25 +88,26 @@ The configuration file's syntax is JSON and it consists of an array of the nodes
 			{
 				"Name": "nc -l",
 				"Mode": "server",
-				"Accept": "5001",
-				"Connect": "5000",
+				"Accept": "localhost:5001",
+				"Connect": "localhost:5000",
 				"Cert": "tls/cert.pem",
 				"Key": "tls/key.pem"
 			},
 			{
 				"Name": "nc",
 				"Mode": "client",
-				"Accept": "5002",
-				"Connect": "5001",
+				"Accept": "localhost:5002",
+				"Connect": "localhost:5001",
 				"Cert": "tls/cert.pem"
 			}
 		],
-		"LogPath": "/dev/stderr"
+		"LogPath": "/dev/null",
+		"StdErrPrefixLogging": true
 	}
 
 Note: read [example](#example-1) for a hands on tutorial on using config.json and the rest of the program.
 
-First is the Nodes array which consists of structs that represent the nodes to launch followed by LogPath to point to the logging file. The following section explains all the fields allowed in the structs representing nodes as well as an explanation of LogPath.
+First is the Nodes array which consists of structs that represent the nodes to launch followed by LogPath to point to the logging file. The following section explains all the fields allowed in the structs representing nodes as well as an explanation of LogPath/StdErrPrefixLogging.
 
 ###Fields
 
@@ -155,18 +156,32 @@ Cert -- path to the RootCA for the certificate from the server. Useful when usin
 
 
 ####LogPath
-It's the path to logFile. Created if doesn't exist, and if deleted during execution also recreated. Use /dev/stderr to output to terminal when needed. You can also use /dev/stdout but /dev/stderr just makes more sense.
+There is always logging to StdErr, no matter what. LogPath just specifies a file to also log to.
+
+The reason there is always logging to stderr is for more integrated logging when using something like systemd that manage's goTunneLS. Check out StdErrPrefixLogging if you're intending on using it with systemd so you can turn off the prefix information as systemd provide's its own. If you don't want the logging on stderr, just redirect it to /dev/null.
+
+This file is created if doesn't exist, and if deleted during execution also recreated.
 
 The format for logging is:
 
 	goTunneLS: year/month/date hour/minute/second --> mode name -/ message
 
-When its global logging the mode is global and name is empty
+When logging is global, the mode is global and name is empty
 
 For example
 
 	goTunneLS: 2015/09/03 07:04:42 --> global -/ starting client node nc
 	goTunneLS: 2015/09/03 07:04:42 --> client nc -/ initializing
+
+
+####StdErrPrefixLogging
+StdErrPrefixLogging allows you to turn off/on the logging prefix. The prefix part of the logging format is:
+
+	goTunneLS: year/month/date hour/minute/second
+
+This lets goTunneLS's logging play nice with integrated system logging such as systemd's journal which have their own timestamp information.
+
+This field only applies to the stderr logging and is off by default. LogPath's file will always have the prefix information.
 
 ###Run at boot
 In order to launch goTunneLS at boot with your OS of choice follow the instructions. The boot files are located in the boot folder.
@@ -264,7 +279,7 @@ First start a goTunneLS instance with the -c flag pointing to the configuration 
 
 	goTunneLS -c config.json
 
-Leave that open and open a new terminal. Now run
+Leave that open and open a new terminal. Now run (make sure the BSD version of netcat is installed for the following commands, if you have the GNU version)
 
 	nc -l 5000
 
@@ -291,7 +306,9 @@ The entire ordeal looks as follow.
 
 Hopefully it makes more sense now to you. nc does everything over plain text and goTunneLS allows you to wrap its insecure connection in TLS. You can take out the server node of the config.json, and take it and actually run it on a server somewhere, just change the Connect address of the client node to the new servers listening address and everything will work the same. Quite fun right? :P
 
-Read the log messages from goTunneLS, you can see what its doing, the tunnels its creating, the certificates its loading, errors etc. I've used /dev/stderr as the logPath in config.json to output to standard err but you can make it a file in the current directory by setting it to "logs". Try it!
+Read the log messages from goTunneLS, you can see what its doing, the tunnels its creating, the certificates its loading, errors etc. Logging is always done to stderr, but you can set a seperate logging file with the LogPath option. I've used /dev/null as LogPath to have it not log to a file. Setting it to /dev/null is the same as not having but, but I set it to demonstrate the option. Set LogPath to "logs" to have logging done to a file called logs in the same directory as config.json. Go ahead and try it!
+
+Note: StdErrPrefixLogging set to true is needed for timestamps on the logging to stderr (stderr is connected to your terminal). By default this option is off so stderr logs don't have the timestamp and name goTunneLS as a prefix, this allows for better integration with systemd which has its own timestamp information on stderr logs. See [StdErrPrefixLogging](#StdErrPrefixLogging) for more information.
 
 Note: The client and server are configured with a default self signed certificate I've provided. When actually using this program for real purposes, please look at the [Configuring Certificates and Keys](#configuring-certificates-and-keys-1) section to generate a new key pair. Anyone who has this key.pem file can decrypt your communications (the configuring certificates section also includes a small introduction, please read it if you do not know what I mean).
 

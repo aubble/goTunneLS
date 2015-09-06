@@ -15,5 +15,7 @@
 			"Connect": "localhost:5001",
 			"Cert": "tls/cert.pem"
 		}
-	]
+	],
+	"LogPath": "/dev/null",
+	"StdErrPrefixLogging": true
 }
