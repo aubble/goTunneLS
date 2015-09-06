@@ -107,7 +107,7 @@ The configuration file's syntax is JSON and it consists of an array of the nodes
 
 Note: read [example](#example-1) for a hands on tutorial on using config.json and the rest of the program.
 
-First is the Nodes array which consists of structs that represent the nodes to launch followed by LogPath to point to the logging file. The following section explains all the fields allowed in the structs representing nodes as well as an explanation of LogPath/StdErrPrefixLogging.
+First is the Nodes array which consists of structs that represent the nodes to launch followed by LogPath to point to the logging file. The following section explains all the fields allowed in the structs representing nodes as well as an explanation of LogPath and StdErrPrefixLogging.
 
 ###Fields
 
