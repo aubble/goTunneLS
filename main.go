@@ -34,7 +34,7 @@ func main() {
 	// setup file logging
 	if gTLS.LogPath != "" {
 		logger.logPath = gTLS.LogPath
-		logFile, err := os.OpenFile(gTLS.LogPath, os.O_WRONLY|os.O_APPEND, 0644)
+		logFile, err := os.OpenFile(gTLS.LogPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 		if err != nil {
 			log.Fatalln("--> global -/", err)
 		}
