@@ -30,7 +30,6 @@ type node struct {
 	// dial address
 	Connect string
 
-	// TODO also look at SignedCertificateTimestamps
 	// path to cert
 	Cert string
 
@@ -197,11 +196,9 @@ func (n *node) server() error {
 		n.logln("starting stapleLoop")
 		go OCSPC.updateStapleLoop()
 		n.tlsConfig.GetCertificate = OCSPC.getCertificate
-		//	} else {
-		//		TLSConfig.Certificates = []tls.Certificate{cert}
-		//TODO FIX THIS BUG
+	} else {
+		n.tlsConfig.Certificates = []tls.Certificate{cert}
 	}
-	n.tlsConfig.Certificates = []tls.Certificate{cert}
 	n.tlsConfig.PreferServerCipherSuites = true
 	updateKey := func(key *[32]byte) {
 		if _, err := rand.Read((*key)[:]); err != nil {
