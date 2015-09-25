@@ -135,6 +135,8 @@ Timeout -- int -- duration to sleep in seconds after network errors, default is 
 
 TCPKeepAliveInterval -- int -- interval between TCP keep alives in seconds, default is 15
 
+LogData -- bool -- determines whether or not to log the actual reading/writing of data
+
 
 ####Required Server Fields
 
@@ -154,7 +156,6 @@ SessionTicketKeyRotationInterval -- int -- interval between session key rotation
 
 ####Optional Client Options
 Cert -- path to the RootCA for the certificate from the server. Useful when using self signed certificates (like below) that are not in the operating systems store, you must use this option to point to the RootCA in those cases or you'll get a nasty error about the certificate not being trusted.
-
 
 ####LogPath
 There is always logging to StdErr, no matter what. LogPath just specifies a file to also log to.

@@ -51,6 +51,9 @@ type node struct {
 	// tcp keep alive interval in seconds, default is 15
 	TCPKeepAliveInterval time.Duration
 
+	// controls the logging the actual writing/reading of data
+	LogData bool
+
 	// tls configuration
 	tlsConfig *tls.Config
 
@@ -329,10 +332,58 @@ func (n *node) listenAndServe() {
 // the calling routine to stop waiting followed by closing dst
 func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 	defer dst.Close()
-	if _, err := io.Copy(dst, src); err != nil {
-		n.logln(err)
+	if n.LogData {
+		if _, err := n.copyBuffer(dst, src); err != nil {
+			n.logln(err)
+		}
+	} else {
+		if _, err := io.Copy(dst, src); err != nil {
+			n.logln(err)
+		}
 	}
 	n.copyWG.Done()
+}
+
+// copyBuffer is the actual implementation of Copy and CopyBuffer.
+// if buf is nil, one is allocated.
+func (n *node) copyBuffer(dst io.Writer, src io.Reader) (written int64, err error) {
+	// If the reader has a WriteTo method, use it to do the copy.
+	// Avoids an allocation and a copy.
+	if wt, ok := src.(io.WriterTo); ok {
+		return wt.WriteTo(dst)
+	}
+	// Similarly, if the writer has a ReadFrom method, use it to do the copy.
+	if rt, ok := dst.(io.ReaderFrom); ok {
+		return rt.ReadFrom(src)
+	}
+	buf := make([]byte, 32*1024)
+	for {
+		nr, er := src.Read(buf)
+		n.logf("read %d bytes", nr)
+		if nr > 0 {
+			nw, ew := dst.Write(buf[0:nr])
+			if nw > 0 {
+				written += int64(nw)
+			}
+			if ew != nil {
+				err = ew
+				break
+			}
+			if nr != nw {
+				err = io.ErrShortWrite
+				break
+			}
+			n.logf("written %d bytes", nw)
+		}
+		if er == io.EOF {
+			break
+		}
+		if er != nil {
+			err = er
+			break
+		}
+	}
+	return written, err
 }
 
 // logln logs to the global fileLogger as global
