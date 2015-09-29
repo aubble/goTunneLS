@@ -12,7 +12,7 @@ goTunneLS is a TLS wrapper/proxy in go. Wrap existing connections in TLS to bypa
 
 Go 1.5 only so make sure you have it installed and configured correctly.
 
-	go get -u github.com/aubble/goTunneLS
+	go get -u github.com/nhooyr/goTunneLS
 
 Will install it into $GOPATH/bin. Make sure your $GOPATH/bin is in your $PATH.
 
