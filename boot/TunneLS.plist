@@ -3,12 +3,12 @@
 <plist version="1.0">
 	<dict>
 		<key>Label</key>
-		<string>goTunneLS</string>
+		<string>TunneLS</string>
 		<key>ProgramArguments</key>
 		<array>
-			<string>/usr/local/bin/goTunneLS</string>
+			<string>/usr/local/bin/TunneLS</string>
 			<string>-c</string>
-			<string>/usr/local/etc/goTunneLS/config.json</string>
+			<string>/usr/local/etc/TunneLS/config.json</string>
 		</array>
 		<key>KeepAlive</key>
 		<true/>

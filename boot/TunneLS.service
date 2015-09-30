@@ -1,10 +1,10 @@
 [Unit]
-Description=goTunneLS TLS proxy
+Description=TunneLS TLS proxy
 Wants=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/usr/local/bin/goTunneLS -c /usr/local/etc/goTunneLS/config.json
+ExecStart=/usr/local/bin/TunneLS -c /usr/local/etc/TunneLS/config.json
 Restart=always
 RestartSec=30
 
