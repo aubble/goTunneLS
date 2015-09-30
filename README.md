@@ -1,10 +1,8 @@
-# goTunneLS
-
-***UNDER DEVELOPMENT CAUTION***
+# TunneLS
 
 ## Description
 
-goTunneLS is a TLS wrapper/proxy in go. Wrap existing connections in TLS to bypass annoying DPI (deep packet filtering) from blocking your connections in other protocols or just secure insecure connections. It can also act as a proxy for an application that doesn't use TLS.
+TunneLS is a TLS wrapper/proxy in go. Wrap existing connections in TLS to bypass annoying DPI (deep packet filtering) from blocking your connections in other protocols or just secure insecure connections. It can also act as a proxy for an application that doesn't use TLS.
 
 **If you're a newbie, read all of the documentation I've wrote specifically for you to get you to not only use it effectivley but also understand how it works!**
 
@@ -12,18 +10,18 @@ goTunneLS is a TLS wrapper/proxy in go. Wrap existing connections in TLS to bypa
 
 Go 1.5 only so make sure you have it installed and configured correctly.
 
-	go get -u github.com/nhooyr/goTunneLS
+	go get -u github.com/nhooyr/TunneLS
 
 Will install it into $GOPATH/bin. Make sure your $GOPATH/bin is in your $PATH.
 
 If so you should be able to launch it as
 
-	goTunneLS
+	TunneLS
 
-Use the -c flag to point it to a config file, the default location it looks for is /usr/local/etc/goTunneLS/config.json.
+Use the -c flag to point it to a config file, the default location it looks for is /usr/local/etc/TunneLS/config.json.
 
 ####[How It Works](#how-it-works-1)
-High level overview of how the goTunneLS works with some neat diagrams.
+High level overview of how the TunneLS works with some neat diagrams.
 
 ####[Configuration](#configuration-1)
 Learn how to configure the program options as well as how to get it to run as a daemon on linux/mac.
@@ -52,9 +50,9 @@ An easy to follow example to understand how the program works. Works along side 
 +----------+                                                    +----------+
 </pre>
 
-The link between the client and server is either insecure or maybe it uses SSH as the protocol which is picked up by deep packet filtering and thus blocked. You can tunnel it instead through a goTunneLS tunnel which is encrypted via TLS, which makes it much less likely to be blocked by DPI as the entire web uses TLS, its far too restrictive for most networks and you should be able to get through.
+The link between the client and server is either insecure or maybe it uses SSH as the protocol which is picked up by deep packet filtering and thus blocked. You can tunnel it instead through a TunneLS tunnel which is encrypted via TLS, which makes it much less likely to be blocked by DPI as the entire web uses TLS, its far too restrictive for most networks and you should be able to get through.
 
-### goTunneLS connections
+### TunneLS connections
 <pre>
 +----------+      +---------------+      +---------------+      +----------+
 |          |      |               +######+               |      |          |
@@ -67,7 +65,7 @@ Now the difference is that whatever the client sends to the gTLS client is forwa
 
 Now that you understand how it works, also know that its pure TLS, know that no other protocol is being used other than TLS to tunnel so its not necessary to use both the server and client. If a application communicates via TLS but the other does not, you only need to wrap insecure one. Thus it can also act as just a proxy.
 
-[Here](http://pastebin.com/raw.php?i=44J505Te) is a diagram of how SSH tunneling can be tunneled through goTunneLS. If you do tunnel ssh through goTunneLS, use dynamic port forwarding and bam, you got yourself a SOCKS5 proxy being tunneled through TLS, perfect for web browsing without any restrictions!
+[Here](http://pastebin.com/raw.php?i=44J505Te) is a diagram of how SSH tunneling can be tunneled through TunneLS. If you do tunnel ssh through TunneLS, use dynamic port forwarding and bam, you got yourself a SOCKS5 proxy being tunneled through TLS, perfect for web browsing without any restrictions!
 
 #### gTLS Client
 Basically the client listens on it's Accept address for plain connections and proxies them to its Connect address via TLS.
@@ -112,7 +110,7 @@ First is the Nodes array which consists of structs that represent the nodes to l
 
 ###Fields
 
-You can use relative file paths, relative to the config file. eg say the config file is in /usr/local/etc/goTunneLS. If the value of the Cert field is "cert.pem" that really means "/usr/local/etc/goTunneLS/cert.pem"
+You can use relative file paths, relative to the config file. eg say the config file is in /usr/local/etc/TunneLS. If the value of the Cert field is "cert.pem" that really means "/usr/local/etc/TunneLS/cert.pem"
 
 When it says int just put a integer such as 10 for the value with no quotes, otherwise the value is implied as a string, eg whatever value with quotes.
 
@@ -160,38 +158,38 @@ Cert -- path to the RootCA for the certificate from the server. Useful when usin
 ####LogPath
 There is always logging to StdErr, no matter what. LogPath just specifies a file to also log to.
 
-The reason there is always logging to stderr is for more integrated logging when using something like systemd that manage's goTunneLS. Check out StdErrPrefixLogging if you're intending on using it with systemd so you can turn off the prefix information as systemd provide's its own. If you don't want the logging on stderr, just redirect it to /dev/null.
+The reason there is always logging to stderr is for more integrated logging when using something like systemd that manage's TunneLS. Check out StdErrPrefixLogging if you're intending on using it with systemd so you can turn off the prefix information as systemd provide's its own. If you don't want the logging on stderr, just redirect it to /dev/null.
 
 This file is created if doesn't exist, and if deleted during execution also recreated.
 
 The format for logging is:
 
-	goTunneLS: year/month/date hour/minute/second --> mode name -/ message
+	TunneLS: year/month/date hour/minute/second --> mode name -/ message
 
 When logging is global, the mode is global and name is empty
 
 For example
 
-	goTunneLS: 2015/09/03 07:04:42 --> global -/ starting client node nc
-	goTunneLS: 2015/09/03 07:04:42 --> client nc -/ initializing
+	TunneLS: 2015/09/03 07:04:42 --> global -/ starting client node nc
+	TunneLS: 2015/09/03 07:04:42 --> client nc -/ initializing
 
 
 ####StdErrPrefixLogging
 StdErrPrefixLogging allows you to turn off/on the logging prefix. The prefix part of the logging format is:
 
-	goTunneLS: year/month/date hour/minute/second
+	TunneLS: year/month/date hour/minute/second
 
-This lets goTunneLS's logging play nice with integrated system logging such as systemd's journal which have their own timestamp information.
+This lets TunneLS's logging play nice with integrated system logging such as systemd's journal which have their own timestamp information.
 
 This field only applies to the stderr logging and is off by default. LogPath's file will always have the prefix information.
 
 ###Run at boot
-In order to launch goTunneLS at boot with your OS of choice follow the instructions. The boot files are located in the boot folder.
+In order to launch TunneLS at boot with your OS of choice follow the instructions. The boot files are located in the boot folder.
 
 ####Linux
-I've included a goTunneLS.service file for systemd in linux. First copy it into /etc/systemd/system/
+I've included a TunneLS.service file for systemd in linux. First copy it into /etc/systemd/system/
 
-Next change the ExecStart field in goTunneLS.service to the absolute path of the goTunneLS executable on your system. Next remove the -c flag if the goTunneLS config file is in /usr/local/etc/goTunneLS/config.json, otherwise please add in the absolute path to the config file.
+Next change the ExecStart field in TunneLS.service to the absolute path of the TunneLS executable on your system. Next remove the -c flag if the TunneLS config file is in /usr/local/etc/TunneLS/config.json, otherwise please add in the absolute path to the config file.
 
 Now reload systemd with
 
@@ -199,16 +197,16 @@ Now reload systemd with
 
 Finally enable it to start at boot with
 
-	sudo systemctl enable goTunneLS
+	sudo systemctl enable TunneLS
 
 ####Mac
-I've included the goTunneLS.plist launch daemon file for launchd in osx. First copy it into /Library/LaunchDaemons. Next change the first string tag of the ProgramArguments array to the absolute path of the goTunneLS executable on your system.
+I've included the TunneLS.plist launch daemon file for launchd in osx. First copy it into /Library/LaunchDaemons. Next change the first string tag of the ProgramArguments array to the absolute path of the TunneLS executable on your system.
 
 Now if you need to specify the location of the config file, please do so on the third tag. Otherwise delete the second and third tags.
 
 Finally load it with
 
-	sudo launchctl load -w /Library/LaunchDaemons/goTunneLS.plist
+	sudo launchctl load -w /Library/LaunchDaemons/TunneLS.plist
 
 
 ##Configuring Certificates and Keys
@@ -276,10 +274,10 @@ This command will generate a self signed certificate and key for you, cert.pem a
 
 
 ##Example
-Lets take a look at the example configuration file, config.json to get an idea of how goTunneLS is configured and how it works.
-First start a goTunneLS instance with the -c flag pointing to the configuration file
+Lets take a look at the example configuration file, config.json to get an idea of how TunneLS is configured and how it works.
+First start a TunneLS instance with the -c flag pointing to the configuration file
 
-	goTunneLS -c config.json
+	TunneLS -c config.json
 
 Leave that open and open a new terminal. Now run (make sure the BSD version of netcat is installed for the following commands, if you have the GNU version)
 
@@ -291,9 +289,9 @@ Leave that nc running and open a new terminal. Now run
 
 	nc localhost 5002
 
-This makes nc dial port 5002 on localhost. Now when you type anything into the nc terminal, and press enter it appears on the other nc instance running in the other terminal! but wait.... the port numbers are different how could this be, how are they connected??? Thats goTunneLS doing its magic.
+This makes nc dial port 5002 on localhost. Now when you type anything into the nc terminal, and press enter it appears on the other nc instance running in the other terminal! but wait.... the port numbers are different how could this be, how are they connected??? Thats TunneLS doing its magic.
 
-In that configuration file there are two goTunneLS "nodes" defined, 1 server and 1 client. The client's Listen address is port 5002 and Connect is to port 5001. This means it accepts plain connections on port 5002 and proxies them to port 5001 with TLS. The Server's listen address is port 5001, and Connect address is port 5000. This means it accepts TLS connections on port 5001 and proxies them to port 5000 with plain connections.
+In that configuration file there are two TunneLS "nodes" defined, 1 server and 1 client. The client's Listen address is port 5002 and Connect is to port 5001. This means it accepts plain connections on port 5002 and proxies them to port 5001 with TLS. The Server's listen address is port 5001, and Connect address is port 5000. This means it accepts TLS connections on port 5001 and proxies them to port 5000 with plain connections.
 
 The entire ordeal looks as follow.
 
@@ -306,9 +304,9 @@ The entire ordeal looks as follow.
 +----------+      +---------------+      +---------------+      +----------+
 </pre>
 
-Hopefully it makes more sense now to you. nc does everything over plain text and goTunneLS allows you to wrap its insecure connection in TLS. You can take out the server node of the config.json, and take it and actually run it on a server somewhere, just change the Connect address of the client node to the new servers listening address and everything will work the same. Quite fun right? :P
+Hopefully it makes more sense now to you. nc does everything over plain text and TunneLS allows you to wrap its insecure connection in TLS. You can take out the server node of the config.json, and take it and actually run it on a server somewhere, just change the Connect address of the client node to the new servers listening address and everything will work the same. Quite fun right? :P
 
-Read the log messages from goTunneLS, you can see what its doing, the tunnels its creating, the certificates its loading, errors etc. Logging is always done to stderr, but you can set a seperate logging file with the LogPath option. I've used /dev/null as LogPath to have it not log to a file. Setting it to /dev/null is the same as not having but, but I set it to demonstrate the option. Set LogPath to "logs" to have logging done to a file called logs in the same directory as config.json. Go ahead and try it!
+Read the log messages from TunneLS, you can see what its doing, the tunnels its creating, the certificates its loading, errors etc. Logging is always done to stderr, but you can set a seperate logging file with the LogPath option. I've used /dev/null as LogPath to have it not log to a file. Setting it to /dev/null is the same as not having but, but I set it to demonstrate the option. Set LogPath to "logs" to have logging done to a file called logs in the same directory as config.json. Go ahead and try it!
 
 StdErrPrefixLogging set to true is needed for timestamps on the logging to stderr (stderr is connected to your terminal). By default this option is off so stderr logs don't have the logging prefix, this allows for better integration with systemd's journal and the like which usually have their own timestamp information logs. See [StdErrPrefixLogging](#stderrprefixlogging) for more information.
 
@@ -320,7 +318,7 @@ Note: The client and server are configured with a default self signed certificat
 
 ## Contribute
 
-Contributions are very welcome. File issues for bugs, fix bugs with a pull request and if you think there is a very essential feature missing from goTunneLS, feel free to either submit a pull request or open a issue.
+Contributions are very welcome. File issues for bugs, fix bugs with a pull request and if you think there is a very essential feature missing from TunneLS, feel free to either submit a pull request or open a issue.
 
 Editing the code is very easy, its not complicated and very well documented. Start at main.go and branch from there and you'll understand exactly how everything works very quickly. Also skip the OCSP code if it doesn't matter to you, its not very important or integral to the concept of the program. Its just for more secure TLS configurations.
 

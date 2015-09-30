@@ -16,7 +16,7 @@ import (
 	"golang.org/x/crypto/ocsp"
 )
 
-// node implements one end of a goTunneLS tunnel
+// node implements one end of a TunneLS tunnel
 type node struct {
 	// name for logging
 	Name string

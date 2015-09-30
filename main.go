@@ -14,16 +14,16 @@ import (
 var logger fileLogger
 
 // main does initialization and launches all the nodes
-// first it reads the config file into a goTunneLS struct
+// first it reads the config file into a TunneLS struct
 // next if a LogPath is provided it sets up logging
 // finally it launches all the nodes and waits for them to end
 func main() {
-	log.SetPrefix("goTunneLS: ")
+	log.SetPrefix("TunneLS: ")
 	// read and parse config file
 	var path string
-	flag.StringVar(&path, "c", "/usr/local/etc/goTunneLS/config.json", "path to configuration file")
+	flag.StringVar(&path, "c", "/usr/local/etc/TunneLS/config.json", "path to configuration file")
 	flag.Parse()
-	gTLS := new(goTunneLS)
+	gTLS := new(TunneLS)
 	gTLS.parseFile(path)
 	dir, _ := filepath.Split(path)
 	if dir != "" {
@@ -38,7 +38,7 @@ func main() {
 		if err != nil {
 			log.Fatalln("--> global -/", err)
 		}
-		logger.Logger = log.New(logFile, "goTunneLS: ", 3)
+		logger.Logger = log.New(logFile, "TunneLS: ", 3)
 		logger.logFile = &logFile
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
