@@ -51,7 +51,10 @@ type node struct {
 	// tcp keep alive interval in seconds, default is 15
 	TCPKeepAliveInterval time.Duration
 
-	// controls the logging the actual writing/reading of data
+	// list of the ciphers
+	Ciphers []uint16
+
+	// controls logging the actual writing/reading of data
 	LogData bool
 
 	// tls configuration
@@ -103,18 +106,7 @@ func (n *node) run() {
 	n.TCPKeepAliveInterval *= time.Second
 	// set mutual TLSConfig fields
 	n.tlsConfig = new(tls.Config)
-	n.tlsConfig.CipherSuites = []uint16{
-		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-		tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-		tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-		tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-		tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-		tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
-		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
-	}
+	n.tlsConfig.CipherSuites = n.Ciphers
 	n.tlsConfig.MinVersion = tls.VersionTLS11
 	n.tlsConfig.NextProtos = []string{"http/1.1"}
 	switch strings.ToLower(n.Mode) {
