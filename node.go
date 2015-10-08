@@ -51,7 +51,6 @@ type node struct {
 	// tcp keep alive interval in seconds, default is 15
 	TCPKeepAliveInterval time.Duration
 
-	// list of the ciphers
 	Ciphers []uint16
 
 	// controls logging the actual writing/reading of data
@@ -106,9 +105,9 @@ func (n *node) run() {
 	n.TCPKeepAliveInterval *= time.Second
 	// set mutual TLSConfig fields
 	n.tlsConfig = new(tls.Config)
-	n.tlsConfig.CipherSuites = n.Ciphers
 	n.tlsConfig.MinVersion = tls.VersionTLS11
 	n.tlsConfig.NextProtos = []string{"http/1.1"}
+	n.tlsConfig.CipherSuites = n.Ciphers
 	switch strings.ToLower(n.Mode) {
 	case "server":
 		n.logln(n.server())
@@ -278,11 +277,6 @@ func (n *node) client() error {
 // connections. Listening is done with the n.Listen function
 // and dialing is done with the n.Dial function
 func (n *node) listenAndServe() {
-	handleError := func(err error) {
-		n.logln(err)
-		n.logf("sleeping for %vs", float64(n.Timeout/time.Second))
-		time.Sleep(n.Timeout)
-	}
 	listenAndServeErr := func() error {
 		ln, err := n.listen()
 		if err != nil {
@@ -315,7 +309,9 @@ func (n *node) listenAndServe() {
 	}
 	for {
 		err := listenAndServeErr()
-		handleError(err)
+		n.logln(err)
+		n.logf("sleeping for %vs", float64(n.Timeout/time.Second))
+		time.Sleep(n.Timeout)
 	}
 }
 
@@ -324,14 +320,14 @@ func (n *node) listenAndServe() {
 // the calling routine to stop waiting followed by closing dst
 func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 	defer dst.Close()
+	var f func(io.Writer, io.Reader) (int64, error)
 	if n.LogData {
-		if _, err := n.copyBuffer(dst, src); err != nil {
-			n.logln(err)
-		}
+		f = n.copyBuffer
 	} else {
-		if _, err := io.Copy(dst, src); err != nil {
-			n.logln(err)
-		}
+		f = io.Copy
+	}
+	if _, err := f(dst, src); err != nil {
+		n.logln(err)
 	}
 	n.copyWG.Done()
 }
