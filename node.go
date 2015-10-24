@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -51,7 +51,7 @@ type node struct {
 	// tcp keep alive interval in seconds, default is 15
 	TCPKeepAliveInterval time.Duration
 
-	Ciphers []uint16
+	Ciphers []string
 
 	// controls logging the actual writing/reading of data
 	LogData bool
@@ -72,20 +72,21 @@ type node struct {
 	nodeWG sync.WaitGroup
 }
 
-// initialize and then run the node according to its mode
-// also set some mutual TLSConfig parameters
-func (n *node) run() {
-	n.logln("initializing")
-	defer n.nodeWG.Done()
-	defer n.logln("exiting")
-	// you can use 5000 as a port instead of :5000
-	if !strings.Contains(n.Accept, ":") {
-		n.Accept = ":" + n.Accept
-	}
-	if !strings.Contains(n.Connect, ":") {
-		n.Connect = ":" + n.Connect
-	}
-	// set defaults for time fields
+func (n *node) parseFields() {
+	// get real time.Duration for time fields
+	n.Timeout *= time.Second
+	n.OCSPInterval *= time.Second
+	n.SessionTicketKeyRotationInterval *= time.Second
+	n.TCPKeepAliveInterval *= time.Second
+	// set mutual TLSConfig fields
+	n.tlsConfig = new(tls.Config)
+	n.tlsConfig.MinVersion = tls.VersionTLS11
+	n.tlsConfig.NextProtos = []string{"http/1.1"}
+	n.tlsConfig.CipherSuites = n.parseCiphers()
+}
+
+// set defaults for time fields
+func (n *node) setDefaults() {
 	if n.Timeout == 0 {
 		n.Timeout = 15
 	}
@@ -98,24 +99,69 @@ func (n *node) run() {
 	if n.TCPKeepAliveInterval == 0 {
 		n.TCPKeepAliveInterval = 15
 	}
-	// calculate real time.Duration for time fields
-	n.Timeout *= time.Second
-	n.OCSPInterval *= time.Second
-	n.SessionTicketKeyRotationInterval *= time.Second
-	n.TCPKeepAliveInterval *= time.Second
-	// set mutual TLSConfig fields
-	n.tlsConfig = new(tls.Config)
-	n.tlsConfig.MinVersion = tls.VersionTLS11
-	n.tlsConfig.NextProtos = []string{"http/1.1"}
-	n.tlsConfig.CipherSuites = n.Ciphers
+}
+
+// initialize and then run the node according to its mode
+// also set some mutual TLSConfig parameters
+func (n *node) run() {
+	n.logln("initializing")
+	defer func() {
+		if r := recover(); r != nil {
+			n.logln(r)
+		}
+		n.logln("exiting")
+		n.nodeWG.Done()
+	}()
+	// you can use 5000 as a port instead of :5000
+	if !strings.Contains(n.Accept, ":") {
+		n.Accept = ":" + n.Accept
+	}
+	if !strings.Contains(n.Connect, ":") {
+		n.Connect = ":" + n.Connect
+	}
+	n.setDefaults()
+	n.parseFields()
 	switch strings.ToLower(n.Mode) {
 	case "server":
-		n.logln(n.server())
+		n.server()
 	case "client":
-		n.logln(n.client())
+		n.client()
 	default:
-		n.logln("no valid mode")
+		panic("no valid mode")
 	}
+}
+
+func (n *node) parseCiphers() []uint16 {
+	var (
+		ok bool
+		c  = make([]uint16, len(n.Ciphers))
+	)
+	for i, s := range n.Ciphers {
+		c[i], ok = ciphers[s]
+		if !ok {
+			panic(fmt.Sprintf("%s is not a valid cipher", s))
+		}
+	}
+	return c
+}
+
+var ciphers = map[string]uint16{
+	"FALLBACK_SCSV":                       tls.TLS_FALLBACK_SCSV,
+	"RSA_WITH_RC4_128_SHA":                tls.TLS_RSA_WITH_RC4_128_SHA,
+	"RSA_WITH_AES_128_CBC_SHA":            tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+	"RSA_WITH_AES_256_CBC_SHA":            tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+	"ECDHE_RSA_WITH_RC4_128_SHA":          tls.TLS_ECDHE_RSA_WITH_RC4_128_SHA,
+	"ECDHE_ECDSA_WITH_RC4_128_SHA":        tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
+	"RSA_WITH_3DES_EDE_CBC_SHA":           tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
+	"ECDHE_RSA_WITH_AES_128_CBC_SHA":      tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+	"ECDHE_RSA_WITH_AES_256_CBC_SHA":      tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+	"ECDHE_ECDSA_WITH_AES_128_CBC_SHA":    tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+	"ECDHE_ECDSA_WITH_AES_256_CBC_SHA":    tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+	"ECDHE_RSA_WITH_AES_128_GCM_SHA256":   tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+	"ECDHE_RSA_WITH_AES_256_GCM_SHA256":   tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+	"ECDHE_ECDSA_WITH_AES_128_GCM_SHA256": tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+	"ECDHE_ECDSA_WITH_AES_256_GCM_SHA384": tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+	"ECDHE_RSA_WITH_3DES_EDE_CBC_SHA":     tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
 }
 
 // tcpKeepAliveListener wraps a TCPListener to
@@ -148,14 +194,14 @@ func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
 // run the node as a server
 // accept TLS TCP and dial plain TCP
 // then copying all data between the two connections
-func (n *node) server() error {
+func (n *node) server() {
 	n.logf("loading cert %s and key %s", n.Cert, n.Key)
 	cert, err := tls.LoadX509KeyPair(n.Cert, n.Key)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	if cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0]); err != nil {
-		return err
+		panic(err)
 	}
 	if cert.Leaf.OCSPServer != nil {
 		n.logln("OCSP servers found", cert.Leaf.OCSPServer)
@@ -164,7 +210,7 @@ func (n *node) server() error {
 		n.logln("reading issuer", n.Issuer)
 		issuerRAW, err := ioutil.ReadFile(n.Issuer)
 		if err != nil {
-			return err
+			panic(err)
 		}
 		for {
 			var issuerPEM *pem.Block
@@ -175,17 +221,17 @@ func (n *node) server() error {
 			if issuerPEM.Type == "CERTIFICATE" {
 				OCSPC.issuer, err = x509.ParseCertificate(issuerPEM.Bytes)
 				if err != nil {
-					return err
+					 panic(err)
 				}
 			}
 		}
 		if OCSPC.issuer == nil {
-			return errors.New("no issuer")
+			panic("no issuer")
 		}
 		n.logln("creating the OCSP request")
 		OCSPC.req, err = ocsp.CreateRequest(OCSPC.cert.Leaf, OCSPC.issuer, nil)
 		if err != nil {
-			return err
+			panic(err)
 		}
 		n.logln("starting stapleLoop")
 		go OCSPC.updateStapleLoop()
@@ -228,19 +274,18 @@ func (n *node) server() error {
 		return d.Dial("tcp", n.Connect)
 	}
 	n.listenAndServe()
-	return nil
 }
 
 // runs the node as a client
 // accept plain TCP and dial TLS TCP
 // then copying all data between the two connections
-func (n *node) client() error {
+func (n *node) client() {
 	var certPool *x509.CertPool
 	if n.Cert != "" {
 		certPool = x509.NewCertPool()
 		raw, err := ioutil.ReadFile(n.Cert)
 		if err != nil {
-			return err
+			panic(err)
 		}
 		n.logf("adding %s to RootCAs pool", n.Cert)
 		ok := certPool.AppendCertsFromPEM(raw)
@@ -250,7 +295,7 @@ func (n *node) client() error {
 	}
 	host, _, err := net.SplitHostPort(n.Connect)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	if host == "" {
 		host = "localhost"
@@ -269,7 +314,6 @@ func (n *node) client() error {
 		return tcpKeepAliveListener{ln.(*net.TCPListener), n.TCPKeepAliveInterval}, nil
 	}
 	n.listenAndServe()
-	return nil
 }
 
 // listenAndServe accepts connections on n.Accept
