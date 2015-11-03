@@ -23,13 +23,13 @@ func newFileLogger(stderrPrefix, stdErrLogging bool, logPath string) *fileLogger
 		log.SetFlags(0)
 		log.SetPrefix("")
 	} else {
-		log.SetPrefix("cserver: ")
+		log.SetPrefix("TunneLS: ")
 	}
 	go func() {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 		<-sigs
-		l.fatal("terminating")
+		l.fatalf("%s terminating", globalPrefix)
 	}()
 	if logPath != "" {
 		logFile, err := os.OpenFile(logPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
@@ -38,7 +38,6 @@ func newFileLogger(stderrPrefix, stdErrLogging bool, logPath string) *fileLogger
 		}
 		l.Logger = log.New(logFile, "cserver: ", 3)
 	}
-	l.println("initialized logging")
 	return l
 }
 
