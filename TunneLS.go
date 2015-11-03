@@ -14,29 +14,32 @@ type TunneLS struct {
 	// path to the logFile
 	LogPath string
 
+	// controls whether or not to log to stderr
+	StderrLogging bool
+
 	// controls whether or not to have timestamps/prefix on the stderr logging
-	StdErrPrefixLogging bool
+	StderrPrefix bool
 }
 
-// read config file into gTLS
-func (gTLS *TunneLS) parseFile(path string) {
+// read config file into tls
+func (tls *TunneLS) parseFile(path string) {
 	raw, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Fatalln("--> global -/", err)
 	}
-	if err = json.Unmarshal(raw, gTLS); err != nil {
+	if err = json.Unmarshal(raw, tls); err != nil {
 		log.Fatalln("--> global -/", err)
 	}
 }
 
 // logln logs to the global fileLogger as global
 // arguements are handled same as fmt.Println
-func (gTLS *TunneLS) logln(v ...interface{}) {
-	logger.println(append([]interface{}{"--> global -/"}, v...)...)
+func (tls *TunneLS) logln(v ...interface{}) {
+	l.println(append([]interface{}{"--> global -/"}, v...)...)
 }
 
 // logf logs to the global fileLogger as global
 // arguements are handled same as fmt.Printf
-func (gTLS *TunneLS) logf(format string, v ...interface{}) {
-	logger.printf("--> global -/ "+format, v...)
+func (tls *TunneLS) logf(format string, v ...interface{}) {
+	l.printf("--> global -/ "+format, v...)
 }

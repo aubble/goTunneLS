@@ -103,14 +103,14 @@ func (n *node) setDefaults() {
 
 // initialize and then run the node according to its mode
 // also set some mutual TLSConfig parameters
-func (n *node) run() {
+func (n *node) run(wg *sync.WaitGroup) {
 	n.logln("initializing")
 	defer func() {
 		if r := recover(); r != nil {
 			n.logln(r)
 		}
 		n.logln("exiting")
-		n.nodeWG.Done()
+		wg.Done()
 	}()
 	// you can use 5000 as a port instead of :5000
 	if !strings.Contains(n.Accept, ":") {
@@ -221,7 +221,7 @@ func (n *node) server() {
 			if issuerPEM.Type == "CERTIFICATE" {
 				OCSPC.issuer, err = x509.ParseCertificate(issuerPEM.Bytes)
 				if err != nil {
-					 panic(err)
+					panic(err)
 				}
 			}
 		}
@@ -421,11 +421,11 @@ func (n *node) copyBuffer(dst io.Writer, src io.Reader) (written int64, err erro
 // logln logs to the global fileLogger as global
 // arguments are handled same as fmt.Println
 func (n *node) logln(v ...interface{}) {
-	logger.println(append([]interface{}{"-->", n.Mode + n.Name, "-/"}, v...)...)
+	l.println(append([]interface{}{"-->", n.Mode + n.Name, "-/"}, v...)...)
 }
 
 // logf logs to the global fileLogger as global
 // arguments are handled same as fmt.Printf
 func (n *node) logf(format string, v ...interface{}) {
-	logger.printf("--> "+n.Mode+n.Name+" -/ "+format, v...)
+	l.printf("--> "+n.Mode+n.Name+" -/ "+format, v...)
 }
