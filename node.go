@@ -67,9 +67,6 @@ type node struct {
 
 	// dials the Connect address
 	dial func() (net.Conn, error)
-
-	// logging prefix
-	prefix string
 }
 
 func (n *node) parseFields() {
@@ -104,7 +101,6 @@ func (n *node) setDefaults() {
 // initialize and then run the node according to its mode
 // also set some mutual TLSConfig parameters
 func (n *node) run(wg *sync.WaitGroup) {
-	n.prefix = fmt.Sprintf("--> %s %-"+maxLength+"s -/", n.Mode, n.Name)
 	n.logln("initializing")
 	defer func() {
 		if r := recover(); r != nil {
@@ -422,11 +418,11 @@ func (n *node) copyBuffer(dst io.Writer, src io.Reader) (written int64, err erro
 // logln logs to the global fileLogger as global
 // arguments are handled same as fmt.Println
 func (n *node) logln(v ...interface{}) {
-	l.println(append([]interface{}{n.prefix}, v...)...)
+	l.println(append([]interface{}{"-->", n.Mode + n.Name, "-/"}, v...)...)
 }
 
 // logf logs to the global fileLogger as global
 // arguments are handled same as fmt.Printf
 func (n *node) logf(format string, v ...interface{}) {
-	l.printf(n.prefix+" "+format, v...)
+	l.printf("--> "+n.Mode+n.Name+" -/ "+format, v...)
 }

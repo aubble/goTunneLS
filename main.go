@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 	"sync"
 )
 
@@ -13,8 +12,6 @@ import (
 var l *fileLogger
 
 const globalPrefix = "--> global -/"
-
-var maxLength string
 
 // main does initialization and launches all the nodes
 // first it reads the config file into a TunneLS struct
@@ -36,25 +33,16 @@ func main() {
 		}
 	}
 	l = newFileLogger(tls.StderrPrefix, tls.StderrLogging, tls.LogPath)
-	l.printf("%s initialized logging", globalPrefix)
-	// get the maximum size of name in logging
-	var ml int
+	var wg sync.WaitGroup
+	wg.Add(len(tls.Nodes))
+	// launch nodes and wait for their return
 	for _, n := range tls.Nodes {
 		// add space to non empty names
 		if n.Name != "" {
 			n.Name = " " + n.Name
 		}
-		if s := len(n.Name); s > ml {
-			ml = s
-		}
-	}
-	maxLength = strconv.Itoa(ml)
-	var wg sync.WaitGroup
-	wg.Add(len(tls.Nodes))
-	// launch nodes and wait for their return
-	for _, n := range tls.Nodes {
 		go n.run(&wg)
 	}
 	wg.Wait()
-	l.printf("%s terminated", globalPrefix)
+	l.printf("%s too many errors, terminating", globalPrefix)
 }
