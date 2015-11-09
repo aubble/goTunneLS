@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,8 +11,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"golang.org/x/crypto/ocsp"
 )
 
 // node implements one end of a TunneLS tunnel
@@ -30,20 +27,17 @@ type node struct {
 	// dial address
 	Connect string
 
-	// path to cert
+	// path to ca
+	CA string
+
+	// path to certs
 	Cert string
 
 	// path to key
 	Key string
 
-	// path to issuer of cert for OCSP
-	Issuer string
-
 	// Duration for sleep after network error in seconds, default is 15
 	Timeout time.Duration
-
-	// interval between OCSP staple updates in seconds. Only applies when OCSP responder has most up to date information, otherwise the interval is until the next update. Default is 180
-	OCSPInterval time.Duration
 
 	// interval between session ticket key rotations in seconds, default is 28800 or 8 hours
 	SessionTicketKeyRotationInterval time.Duration
@@ -51,10 +45,17 @@ type node struct {
 	// tcp keep alive interval in seconds, default is 15
 	TCPKeepAliveInterval time.Duration
 
+	// ciphers to use
 	Ciphers []string
 
 	// controls logging the actual writing/reading of data
 	LogData bool
+
+	// type of client authentication to use
+	ClientAuth tls.ClientAuthType
+
+	// path to CRL for client-authentication
+	CRL string
 
 	// tls configuration
 	tlsConfig *tls.Config
@@ -72,7 +73,6 @@ type node struct {
 func (n *node) parseFields() {
 	// get real time.Duration for time fields
 	n.Timeout *= time.Second
-	n.OCSPInterval *= time.Second
 	n.SessionTicketKeyRotationInterval *= time.Second
 	n.TCPKeepAliveInterval *= time.Second
 	// set mutual TLSConfig fields
@@ -86,9 +86,6 @@ func (n *node) parseFields() {
 func (n *node) setDefaults() {
 	if n.Timeout == 0 {
 		n.Timeout = 15
-	}
-	if n.OCSPInterval == 0 {
-		n.OCSPInterval = 180
 	}
 	if n.SessionTicketKeyRotationInterval == 0 {
 		n.SessionTicketKeyRotationInterval = 28800
@@ -118,14 +115,39 @@ func (n *node) run(wg *sync.WaitGroup) {
 	}
 	n.setDefaults()
 	n.parseFields()
+	if n.Cert != "" {
+		n.logf("loading cert %s and key %s", n.Cert, n.Key)
+		var err error
+		n.tlsConfig.Certificates = make([]tls.Certificate, 1)
+		n.tlsConfig.Certificates[0], err = tls.LoadX509KeyPair(n.Cert, n.Key)
+		if err != nil {
+			panic(err)
+		}
+	}
 	switch strings.ToLower(n.Mode) {
 	case "server":
 		n.server()
 	case "client":
 		n.client()
 	default:
-		panic("no valid mode")
+		panic("invalid mode")
 	}
+}
+
+func (n *node) readCAIntoPool() (pool *x509.CertPool) {
+	if n.CA != "" {
+		ca, err := ioutil.ReadFile(n.CA)
+		if err != nil {
+			panic(err)
+		}
+		pool = x509.NewCertPool()
+		n.logf("adding %s to CA pool", n.CA)
+		ok := pool.AppendCertsFromPEM(ca)
+		if ok == false {
+			panic("could not append cert to RootCAs pool")
+		}
+	}
+	return
 }
 
 func (n *node) parseCiphers() []uint16 {
@@ -142,101 +164,13 @@ func (n *node) parseCiphers() []uint16 {
 	return c
 }
 
-var ciphers = map[string]uint16{
-	"FALLBACK_SCSV":                       tls.TLS_FALLBACK_SCSV,
-	"RSA_WITH_RC4_128_SHA":                tls.TLS_RSA_WITH_RC4_128_SHA,
-	"RSA_WITH_AES_128_CBC_SHA":            tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-	"RSA_WITH_AES_256_CBC_SHA":            tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-	"ECDHE_RSA_WITH_RC4_128_SHA":          tls.TLS_ECDHE_RSA_WITH_RC4_128_SHA,
-	"ECDHE_ECDSA_WITH_RC4_128_SHA":        tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
-	"RSA_WITH_3DES_EDE_CBC_SHA":           tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
-	"ECDHE_RSA_WITH_AES_128_CBC_SHA":      tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-	"ECDHE_RSA_WITH_AES_256_CBC_SHA":      tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-	"ECDHE_ECDSA_WITH_AES_128_CBC_SHA":    tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-	"ECDHE_ECDSA_WITH_AES_256_CBC_SHA":    tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-	"ECDHE_RSA_WITH_AES_128_GCM_SHA256":   tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-	"ECDHE_RSA_WITH_AES_256_GCM_SHA256":   tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-	"ECDHE_ECDSA_WITH_AES_128_GCM_SHA256": tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-	"ECDHE_ECDSA_WITH_AES_256_GCM_SHA384": tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-	"ECDHE_RSA_WITH_3DES_EDE_CBC_SHA":     tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
-}
-
-// tcpKeepAliveListener wraps a TCPListener to
-// activate TCP keep alive on every accepted connection
-type tcpKeepAliveListener struct {
-	// inner TCPlistener
-	*net.TCPListener
-
-	// interval between keep alives to set on accepted conns
-	keepAliveInterval time.Duration
-}
-
-// Accept a TCP Conn and enable TCP keep alive
-func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
-	tc, err := ln.AcceptTCP()
-	if err != nil {
-		return
-	}
-	err = tc.SetKeepAlive(true)
-	if err != nil {
-		return
-	}
-	err = tc.SetKeepAlivePeriod(ln.keepAliveInterval)
-	if err != nil {
-		return
-	}
-	return tc, nil
-}
-
 // run the node as a server
 // accept TLS TCP and dial plain TCP
 // then copying all data between the two connections
 func (n *node) server() {
-	n.logf("loading cert %s and key %s", n.Cert, n.Key)
-	cert, err := tls.LoadX509KeyPair(n.Cert, n.Key)
-	if err != nil {
-		panic(err)
-	}
-	if cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0]); err != nil {
-		panic(err)
-	}
-	if cert.Leaf.OCSPServer != nil {
-		n.logln("OCSP servers found", cert.Leaf.OCSPServer)
-		n.logln("initalizing OCSP stapling")
-		OCSPC := OCSPCert{n: n, cert: &cert}
-		n.logln("reading issuer", n.Issuer)
-		issuerRAW, err := ioutil.ReadFile(n.Issuer)
-		if err != nil {
-			panic(err)
-		}
-		for {
-			var issuerPEM *pem.Block
-			issuerPEM, issuerRAW = pem.Decode(issuerRAW)
-			if issuerPEM == nil {
-				break
-			}
-			if issuerPEM.Type == "CERTIFICATE" {
-				OCSPC.issuer, err = x509.ParseCertificate(issuerPEM.Bytes)
-				if err != nil {
-					panic(err)
-				}
-			}
-		}
-		if OCSPC.issuer == nil {
-			panic("no issuer")
-		}
-		n.logln("creating the OCSP request")
-		OCSPC.req, err = ocsp.CreateRequest(OCSPC.cert.Leaf, OCSPC.issuer, nil)
-		if err != nil {
-			panic(err)
-		}
-		n.logln("starting stapleLoop")
-		go OCSPC.updateStapleLoop()
-		n.tlsConfig.GetCertificate = OCSPC.getCertificate
-	} else {
-		n.tlsConfig.Certificates = []tls.Certificate{cert}
-	}
+	n.tlsConfig.ClientAuth = n.ClientAuth
 	n.tlsConfig.PreferServerCipherSuites = true
+	n.tlsConfig.ClientCAs = n.readCAIntoPool()
 	updateKey := func(key *[32]byte) {
 		if _, err := rand.Read((*key)[:]); err != nil {
 			n.logln(err)
@@ -251,7 +185,7 @@ func (n *node) server() {
 	go func() {
 		for {
 			n.tlsConfig.SetSessionTicketKeys(keys)
-			n.logf("session ticket key rotation loop sleeping for %vs", float64(n.SessionTicketKeyRotationInterval/time.Second))
+			n.logf("session ticket key rotation sleeping for %vs", float64(n.SessionTicketKeyRotationInterval/time.Second))
 			time.Sleep(n.SessionTicketKeyRotationInterval)
 			n.logln("updating session ticket rotation keys")
 			keys[0] = keys[1]
@@ -259,12 +193,16 @@ func (n *node) server() {
 			updateKey(&keys[2])
 		}
 	}()
-	n.listen = func() (net.Listener, error) {
+	n.listen = func() (tlsLn net.Listener, err error) {
 		ln, err := net.Listen("tcp", n.Accept)
 		if err != nil {
 			return nil, err
 		}
-		return tls.NewListener(tcpKeepAliveListener{ln.(*net.TCPListener), n.TCPKeepAliveInterval}, n.tlsConfig), err
+		tlsLn, err = tls.NewListener(tcpKeepAliveListener{ln.(*net.TCPListener), n.TCPKeepAliveInterval}, n.tlsConfig), err
+		if n.CRL != "" {
+			tlsLn = &crlListener{tlsLn, n}
+		}
+		return
 	}
 	n.dial = func() (c net.Conn, err error) {
 		d := &net.Dialer{KeepAlive: n.TCPKeepAliveInterval}
@@ -277,19 +215,6 @@ func (n *node) server() {
 // accept plain TCP and dial TLS TCP
 // then copying all data between the two connections
 func (n *node) client() {
-	var certPool *x509.CertPool
-	if n.Cert != "" {
-		certPool = x509.NewCertPool()
-		raw, err := ioutil.ReadFile(n.Cert)
-		if err != nil {
-			panic(err)
-		}
-		n.logf("adding %s to RootCAs pool", n.Cert)
-		ok := certPool.AppendCertsFromPEM(raw)
-		if ok == false {
-			n.logln("could not append cert to RootCAs pool")
-		}
-	}
 	host, _, err := net.SplitHostPort(n.Connect)
 	if err != nil {
 		panic(err)
@@ -298,7 +223,7 @@ func (n *node) client() {
 		host = "localhost"
 	}
 	n.tlsConfig.ServerName = host
-	n.tlsConfig.RootCAs = certPool
+	n.tlsConfig.RootCAs = n.readCAIntoPool()
 	n.dial = func() (net.Conn, error) {
 		d := &net.Dialer{KeepAlive: n.TCPKeepAliveInterval}
 		return tls.DialWithDialer(d, "tcp", n.Connect, n.tlsConfig)
@@ -425,4 +350,94 @@ func (n *node) logln(v ...interface{}) {
 // arguments are handled same as fmt.Printf
 func (n *node) logf(format string, v ...interface{}) {
 	l.printf("--> "+n.Mode+n.Name+" -/ "+format, v...)
+}
+
+var ciphers = map[string]uint16{
+	"FALLBACK_SCSV":                       tls.TLS_FALLBACK_SCSV,
+	"RSA_WITH_RC4_128_SHA":                tls.TLS_RSA_WITH_RC4_128_SHA,
+	"RSA_WITH_AES_128_CBC_SHA":            tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+	"RSA_WITH_AES_256_CBC_SHA":            tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+	"ECDHE_RSA_WITH_RC4_128_SHA":          tls.TLS_ECDHE_RSA_WITH_RC4_128_SHA,
+	"ECDHE_ECDSA_WITH_RC4_128_SHA":        tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
+	"RSA_WITH_3DES_EDE_CBC_SHA":           tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
+	"ECDHE_RSA_WITH_AES_128_CBC_SHA":      tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+	"ECDHE_RSA_WITH_AES_256_CBC_SHA":      tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+	"ECDHE_ECDSA_WITH_AES_128_CBC_SHA":    tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+	"ECDHE_ECDSA_WITH_AES_256_CBC_SHA":    tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+	"ECDHE_RSA_WITH_AES_128_GCM_SHA256":   tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+	"ECDHE_RSA_WITH_AES_256_GCM_SHA256":   tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+	"ECDHE_ECDSA_WITH_AES_128_GCM_SHA256": tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+	"ECDHE_ECDSA_WITH_AES_256_GCM_SHA384": tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+	"ECDHE_RSA_WITH_3DES_EDE_CBC_SHA":     tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
+}
+
+// tcpKeepAliveListener wraps a TCPListener to
+// activate TCP keep alive on every accepted connection
+type tcpKeepAliveListener struct {
+	// inner TCPlistener
+	*net.TCPListener
+
+	// interval between keep alives to set on accepted conns
+	keepAliveInterval time.Duration
+}
+
+// Accept a TCP Conn and enable TCP keep alive
+func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
+	tc, err := ln.AcceptTCP()
+	if err != nil {
+		return
+	}
+	err = tc.SetKeepAlive(true)
+	if err != nil {
+		return
+	}
+	err = tc.SetKeepAlivePeriod(ln.keepAliveInterval)
+	if err != nil {
+		return
+	}
+	return tc, nil
+}
+
+type crlListener struct {
+	net.Listener
+	n *node
+}
+
+func (ln *crlListener) Accept() (net.Conn, error) {
+listen:
+	for {
+		c, err := ln.Listener.Accept()
+		if err != nil {
+			return nil, err
+		}
+		ln.n.logln("reading and parsing certificate revocation list")
+		clrRaw, err := ioutil.ReadFile(ln.n.CRL)
+		if err != nil {
+			return nil, err
+		}
+		clr, err := x509.ParseCRL(clrRaw)
+		if err != nil {
+			return nil, err
+		}
+		tlsC := c.(*tls.Conn)
+		err = tlsC.Handshake()
+		if err != nil {
+			return nil, err
+		}
+		certs := tlsC.ConnectionState().PeerCertificates
+		if len(certs) > 0 {
+			cert := certs[len(certs)-1]
+			ln.n.logln("checking if revoked certificate provided")
+			for _, revoked := range clr.TBSCertList.RevokedCertificates {
+				if cert.SerialNumber.Cmp(revoked.SerialNumber) == 0 {
+					ln.n.logf("revoked certificate from %s", c.RemoteAddr())
+					continue listen
+				}
+			}
+		} else {
+			ln.n.logf("no certificates provided from %s", c.RemoteAddr())
+			continue
+		}
+		return c, err
+	}
 }

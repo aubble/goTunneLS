@@ -21,12 +21,11 @@ func main() {
 	log.SetPrefix("")
 	log.SetFlags(0)
 	// read and parse config file
-	var path string
-	flag.StringVar(&path, "c", "/usr/local/etc/TunneLS/config.json", "path to configuration file")
+	path := flag.String("c", "/usr/local/etc/TunneLS/config.json", "path to configuration file")
 	flag.Parse()
 	tls := new(TunneLS)
-	tls.parseFile(path)
-	dir, _ := filepath.Split(path)
+	tls.parseFile(*path)
+	dir, _ := filepath.Split(*path)
 	if dir != "" {
 		if err := os.Chdir(dir); err != nil {
 			log.Fatalf("%s %s", globalPrefix, err)
