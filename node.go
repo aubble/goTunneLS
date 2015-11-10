@@ -256,21 +256,20 @@ func (n *node) listenAndServe() {
 				return err
 			}
 			n.logln("connection from", c1.RemoteAddr())
-			go func(c1 net.Conn) {
-				n.logln("connecting to", n.Connect)
-				c2, err := n.dial()
-				if err != nil {
-					n.logln(err)
-					c1.Close()
-					return
-				}
+			n.logln("connecting to", n.Connect)
+			c2, err := n.dial()
+			if err != nil {
+				c1.Close()
+				return err
+			}
+			go func(c1, c2 net.Conn) {
 				n.logf("beginning tunnel from %s to %s then %s to %s", c1.RemoteAddr(), c1.LocalAddr(), c2.LocalAddr(), c2.RemoteAddr())
 				n.copyWG.Add(2)
 				go n.copy(c1, c2)
 				go n.copy(c2, c1)
 				n.copyWG.Wait()
 				n.logf("closed tunnel from %s to %s then %s to %s", c1.RemoteAddr(), c1.LocalAddr(), c2.LocalAddr(), c2.RemoteAddr())
-			}(c1)
+			}(c1, c2)
 		}
 	}
 	for {
@@ -421,7 +420,7 @@ listen:
 		tlsC := c.(*tls.Conn)
 		err = tlsC.Handshake()
 		if err != nil {
-			ln.n.logf("%s %s", err, c.RemoteAddr())
+			ln.n.logln(err)
 			continue
 		}
 		certs := tlsC.ConnectionState().PeerCertificates
