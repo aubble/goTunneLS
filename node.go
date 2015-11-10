@@ -30,10 +30,10 @@ type node struct {
 	// path to ca
 	CA string
 
-	// path to certs
+	// path to certificate chain presented to other side of the connection
 	Cert string
 
-	// path to key
+	// path to key for certificate
 	Key string
 
 	// Duration for sleep after network error in seconds, default is 15
