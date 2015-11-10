@@ -410,7 +410,6 @@ listen:
 		if err != nil {
 			return nil, err
 		}
-		ln.n.logln("reading and parsing certificate revocation list")
 		clrRaw, err := ioutil.ReadFile(ln.n.CRL)
 		if err != nil {
 			return nil, err
@@ -422,22 +421,18 @@ listen:
 		tlsC := c.(*tls.Conn)
 		err = tlsC.Handshake()
 		if err != nil {
-			return nil, err
-		}
-		certs := tlsC.ConnectionState().PeerCertificates
-		if len(certs) > 0 {
-			cert := certs[len(certs)-1]
-			ln.n.logln("checking if revoked certificate provided")
-			for _, revoked := range clr.TBSCertList.RevokedCertificates {
-				if cert.SerialNumber.Cmp(revoked.SerialNumber) == 0 {
-					ln.n.logf("revoked certificate from %s", c.RemoteAddr())
-					continue listen
-				}
-			}
-		} else {
-			ln.n.logf("no certificates provided from %s", c.RemoteAddr())
+			ln.n.logf("%s %s", err, c.RemoteAddr())
 			continue
 		}
+		certs := tlsC.ConnectionState().PeerCertificates
+		cert := certs[len(certs)-1]
+		for _, revoked := range clr.TBSCertList.RevokedCertificates {
+			if cert.SerialNumber.Cmp(revoked.SerialNumber) == 0 {
+				ln.n.logf("got revoked %s certificate from %s", cert.Subject.CommonName, c.RemoteAddr())
+				continue listen
+			}
+		}
+		ln.n.logf("accepted %s certificate from %s", cert.Subject.CommonName, c.RemoteAddr())
 		return c, err
 	}
 }
