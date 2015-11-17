@@ -1,7 +1,5 @@
 # TunneLS
 
-### DOCUMENTATION IS OUTDATED, I'VE ADDED NEW FEATURES AND OTHER STUFF AND CHANGED IT
-
 ## Description
 
 TunneLS is a TLS wrapper/proxy in go. Wrap existing connections in TLS to bypass annoying DPI (deep packet filtering) from blocking your connections in other protocols or just secure insecure connections. It can also act as a proxy for an application that doesn't use TLS.
@@ -138,6 +136,11 @@ TCPKeepAliveInterval -- int -- interval between TCP keep alives in seconds, defa
 
 LogData -- bool -- determines whether or not to log the actual reading/writing of data
 
+Ciphers -- array of ciphers to use, see [this](https://golang.org/pkg/crypto/tls/#pkg-constants) for a list. If you only want to use "TLS\_RSA\_WITH\_RC4\_128\_SHA" put in the array the string without the "TLS\_" part. So the json would look like this:
+
+	"Ciphers": [
+		"RSA_WITH_RC4_128_SHA"
+	]
 
 ####Required Server Fields
 
@@ -148,12 +151,13 @@ Key -- path to the key file of the Cert
 
 ####Optional Server fields
 
-Issuer -- path to the issuer file of the cert. Only used in OCSP to validate the response from the OCSP responder.
-
-OCSPInterval -- int --interval between OCSP staple updates in seconds. Only applies when the OCSP responder has the most up to date information, otherwise the interval between OCSP staple updates will be until the next update. Default is 180.
-
 SessionTicketKeyRotationInterval -- int -- interval between session key rotation in seconds, default is 28800 or 8 hours.
 
+ClientAuth -- type of client authentication. see [this](https://golang.org/pkg/crypto/tls/#ClientAuthType) for the list. Just set it to one of the values. Json should look like
+
+	"ClientAuth": "NoClientCert"
+
+CRL -- path to certificate revocation list for client authentication
 
 ####Optional Client Options
 Cert -- path to the RootCA for the certificate from the server. Useful when using self signed certificates (like below) that are not in the operating systems store, you must use this option to point to the RootCA in those cases or you'll get a nasty error about the certificate not being trusted.
@@ -323,7 +327,7 @@ Note: The client and server are configured with a default self signed certificat
 
 Contributions are very welcome. File issues for bugs, fix bugs with a pull request and if you think there is a very essential feature missing from TunneLS, feel free to either submit a pull request or open a issue.
 
-Editing the code is very easy, its not complicated and very well documented. Start at main.go and branch from there and you'll understand exactly how everything works very quickly. Also skip the OCSP code if it doesn't matter to you, its not very important or integral to the concept of the program. Its just for more secure TLS configurations.
+Editing the code is very easy, its not complicated and very well documented. Start at main.go and branch from there and you'll understand exactly how everything works very quickly.
 
 ## Contact
 

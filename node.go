@@ -52,7 +52,7 @@ type node struct {
 	LogData bool
 
 	// type of client authentication to use
-	ClientAuth tls.ClientAuthType
+	ClientAuth string
 
 	// path to CRL for client-authentication
 	CRL string
@@ -164,11 +164,29 @@ func (n *node) parseCiphers() []uint16 {
 	return c
 }
 
+var clientAuthTypes = map[string]tls.ClientAuthType{
+	"NoClientCert":               tls.NoClientCert,
+	"RequestClientCert":          tls.RequestClientCert,
+	"RequireAnyClientCert":       tls.RequireAnyClientCert,
+	"VerifyClientCertIfGiven":    tls.VerifyClientCertIfGiven,
+	"RequireAndVerifyClientCert": tls.RequireAndVerifyClientCert,
+}
+
+func (n *node) parseClientAuthType() tls.ClientAuthType {
+	ca, ok := clientAuthTypes[n.ClientAuth]
+	if !ok {
+		panic(fmt.Sprintf("%s is not a valid client authentication type", n.ClientAuth))
+	}
+	return ca
+}
+
 // run the node as a server
 // accept TLS TCP and dial plain TCP
 // then copying all data between the two connections
 func (n *node) server() {
-	n.tlsConfig.ClientAuth = n.ClientAuth
+	if n.ClientAuth != "" {
+		n.tlsConfig.ClientAuth = n.parseClientAuthType()
+	}
 	n.tlsConfig.PreferServerCipherSuites = true
 	n.tlsConfig.ClientCAs = n.readCAIntoPool()
 	updateKey := func(key *[32]byte) {
