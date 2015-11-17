@@ -136,7 +136,7 @@ TCPKeepAliveInterval -- int -- interval between TCP keep alives in seconds, defa
 
 LogData -- bool -- determines whether or not to log the actual reading/writing of data
 
-Ciphers -- array of ciphers to use, see [this](https://golang.org/pkg/crypto/tls/#pkg-constants) for a list. If you only want to use "TLS\_RSA\_WITH\_RC4\_128\_SHA" put in the array the string without the "TLS\_" part. So the json would look like this:
+Ciphers -- array of ciphers to use, see [this](https://golang.org/pkg/crypto/tls/#pkg-constants) for a list. Add the name without the "TLS\_" part. If you only want to use "TLS\_RSA\_WITH\_RC4\_128\_SHA" then it should look like
 
 	"Ciphers": [
 		"RSA_WITH_RC4_128_SHA"
@@ -153,9 +153,9 @@ Key -- path to the key file of the Cert
 
 SessionTicketKeyRotationInterval -- int -- interval between session key rotation in seconds, default is 28800 or 8 hours.
 
-ClientAuth -- type of client authentication. see [this](https://golang.org/pkg/crypto/tls/#ClientAuthType) for the list. Just set it to one of the values. Json should look like
+ClientAuth -- type of client authentication. see [this](https://golang.org/pkg/crypto/tls/#ClientAuthType) for the list. Just set it to one of the names. Json should look like
 
-	"ClientAuth": "NoClientCert"
+	"ClientAuth": "RequireAndVerifyClientCert"
 
 CRL -- path to certificate revocation list for client authentication
 
