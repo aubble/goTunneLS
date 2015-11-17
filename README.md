@@ -157,7 +157,7 @@ ClientAuth -- type of client authentication. see [this](https://golang.org/pkg/c
 
 	"ClientAuth": "RequireAndVerifyClientCert"
 
-CRL -- path to certificate revocation list for client authentication
+CRL -- path to certificate revocation list for client authentication (read every single time a client authenticates)
 
 ####Optional Client Options
 Cert -- path to the RootCA for the certificate from the server. Useful when using self signed certificates (like below) that are not in the operating systems store, you must use this option to point to the RootCA in those cases or you'll get a nasty error about the certificate not being trusted.
