@@ -89,6 +89,10 @@ func (n *node) setDefaults() {
 	if n.TCPKeepAliveInterval == 0 {
 		n.TCPKeepAliveInterval = 15
 	}
+	// set mutual TLSConfig fields
+	n.tlsConfig = new(tls.Config)
+	n.tlsConfig.MinVersion = tls.VersionTLS11
+	n.tlsConfig.NextProtos = []string{"http/1.1"}
 }
 
 // initialize and then run the node according to its mode
@@ -111,10 +115,6 @@ func (n *node) run(wg *sync.WaitGroup) {
 	}
 	n.setDefaults()
 	n.parseFields()
-	// set mutual TLSConfig fields
-	n.tlsConfig = new(tls.Config)
-	n.tlsConfig.MinVersion = tls.VersionTLS11
-	n.tlsConfig.NextProtos = []string{"http/1.1"}
 	if n.Cert != "" {
 		n.logf("loading cert %s and key %s", n.Cert, n.Key)
 		var err error

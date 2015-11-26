@@ -23,7 +23,7 @@ func newFileLogger(stderrPrefix, stdErrLogging bool, logPath string) *fileLogger
 		log.SetFlags(0)
 		log.SetPrefix("")
 	} else {
-		log.SetFlags(3)
+		log.SetFlags(log.Ldate | log.Ltime)
 		log.SetPrefix("TunneLS: ")
 	}
 	go func() {
