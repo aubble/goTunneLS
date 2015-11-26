@@ -180,15 +180,7 @@ func (n *node) parseClientAuthType() tls.ClientAuthType {
 	return ca
 }
 
-// run the node as a server
-// accept TLS TCP and dial plain TCP
-// then copying all data between the two connections
-func (n *node) server() {
-	if n.ClientAuth != "" {
-		n.tlsConfig.ClientAuth = n.parseClientAuthType()
-	}
-	n.tlsConfig.PreferServerCipherSuites = true
-	n.tlsConfig.ClientCAs = n.readCAIntoPool()
+func (n *node) initializeSessionTicketKeyRotation(){
 	updateKey := func(key *[32]byte) {
 		if _, err := rand.Read((*key)[:]); err != nil {
 			n.logln(err)
@@ -211,6 +203,18 @@ func (n *node) server() {
 			updateKey(&keys[2])
 		}
 	}()
+}
+
+// run the node as a server
+// accept TLS TCP and dial plain TCP
+// then copying all data between the two connections
+func (n *node) server() {
+	if n.ClientAuth != "" {
+		n.tlsConfig.ClientAuth = n.parseClientAuthType()
+	}
+	n.tlsConfig.PreferServerCipherSuites = true
+	n.tlsConfig.ClientCAs = n.readCAIntoPool()
+	n.initializeSessionTicketKeyRotation()
 	n.listen = func() (tlsLn net.Listener, err error) {
 		ln, err := net.Listen("tcp", n.Accept)
 		if err != nil {
@@ -256,41 +260,51 @@ func (n *node) client() {
 	n.listenAndServe()
 }
 
-// listenAndServe accepts connections on n.Accept
+// listenAndServeErr accepts connections on n.Accept
 // it then dials n.Connect and copies all data between the two
 // connections. Listening is done with the n.Listen function
-// and dialing is done with the n.Dial function
-func (n *node) listenAndServe() {
-	listenAndServeErr := func() error {
-		ln, err := n.listen()
+// and dialing is done with the n.Dial function. Any errors are returned
+func (n *node) listenAndServeErr() error {
+	ln, err := n.listen()
+	if err != nil {
+		return err
+	}
+	defer ln.Close()
+	n.logln("listening on", n.Accept)
+	for {
+		c1, err := ln.Accept()
 		if err != nil {
 			return err
 		}
-		defer ln.Close()
-		n.logln("listening on", n.Accept)
-		for {
-			c1, err := ln.Accept()
-			if err != nil {
-				return err
-			}
-			n.logln("connection from", c1.RemoteAddr())
-			n.logln("connecting to", n.Connect)
-			c2, err := n.dial()
-			if err != nil {
-				c1.Close()
-				return err
-			}
-			go n.tunnel(c1, c2)
-		}
+		n.logln("connection from", c1.RemoteAddr())
+		go n.dialAndTunnel(c1)
 	}
+}
+
+// ListenAndServe creates a loop to call listenAndServeErr and then
+// on the return of errors timeout and restart
+func (n *node) listenAndServe() {
 	for {
-		err := listenAndServeErr()
+		err := n.listenAndServeErr()
 		n.logln(err)
 		n.logf("sleeping for %vs", float64(n.Timeout/time.Second))
 		time.Sleep(n.Timeout)
 	}
 }
 
+// takes the first conn, dials the connection address, then creates a tunnel between the two
+func (n *node) dialAndTunnel(c1 net.Conn) {
+	n.logln("connecting to", n.Connect)
+	c2, err := n.dial()
+	if err != nil {
+		c1.Close()
+		n.logln(err)
+		return
+	}
+	n.tunnel(c1, c2)
+}
+
+// creates the tunnel between c1 and c2
 func (n *node) tunnel(c1, c2 net.Conn) {
 	n.logf("beginning tunnel from %s to %s then %s to %s", c1.RemoteAddr(), c1.LocalAddr(), c2.LocalAddr(), c2.RemoteAddr())
 	n.copyWG.Add(2)
