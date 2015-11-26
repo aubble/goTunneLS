@@ -460,6 +460,7 @@ listen:
 		for _, revoked := range clr.TBSCertList.RevokedCertificates {
 			if cert.SerialNumber.Cmp(revoked.SerialNumber) == 0 {
 				ln.n.logf("got revoked %s certificate from %s", cert.Subject.CommonName, c.RemoteAddr())
+				c.Close()
 				continue listen
 			}
 		}
