@@ -75,10 +75,6 @@ func (n *node) parseFields() {
 	n.Timeout *= time.Second
 	n.SessionTicketKeyRotationInterval *= time.Second
 	n.TCPKeepAliveInterval *= time.Second
-	// set mutual TLSConfig fields
-	n.tlsConfig = new(tls.Config)
-	n.tlsConfig.MinVersion = tls.VersionTLS11
-	n.tlsConfig.NextProtos = []string{"http/1.1"}
 	n.tlsConfig.CipherSuites = n.parseCiphers()
 }
 
@@ -115,6 +111,10 @@ func (n *node) run(wg *sync.WaitGroup) {
 	}
 	n.setDefaults()
 	n.parseFields()
+	// set mutual TLSConfig fields
+	n.tlsConfig = new(tls.Config)
+	n.tlsConfig.MinVersion = tls.VersionTLS11
+	n.tlsConfig.NextProtos = []string{"http/1.1"}
 	if n.Cert != "" {
 		n.logf("loading cert %s and key %s", n.Cert, n.Key)
 		var err error
@@ -280,14 +280,7 @@ func (n *node) listenAndServe() {
 				c1.Close()
 				return err
 			}
-			go func(c1, c2 net.Conn) {
-				n.logf("beginning tunnel from %s to %s then %s to %s", c1.RemoteAddr(), c1.LocalAddr(), c2.LocalAddr(), c2.RemoteAddr())
-				n.copyWG.Add(2)
-				go n.copy(c1, c2)
-				go n.copy(c2, c1)
-				n.copyWG.Wait()
-				n.logf("closed tunnel from %s to %s then %s to %s", c1.RemoteAddr(), c1.LocalAddr(), c2.LocalAddr(), c2.RemoteAddr())
-			}(c1, c2)
+			go n.tunnel(c1, c2)
 		}
 	}
 	for {
@@ -296,6 +289,15 @@ func (n *node) listenAndServe() {
 		n.logf("sleeping for %vs", float64(n.Timeout/time.Second))
 		time.Sleep(n.Timeout)
 	}
+}
+
+func (n *node) tunnel(c1, c2 net.Conn) {
+	n.logf("beginning tunnel from %s to %s then %s to %s", c1.RemoteAddr(), c1.LocalAddr(), c2.LocalAddr(), c2.RemoteAddr())
+	n.copyWG.Add(2)
+	go n.copy(c1, c2)
+	go n.copy(c2, c1)
+	n.copyWG.Wait()
+	n.logf("closed tunnel from %s to %s then %s to %s", c1.RemoteAddr(), c1.LocalAddr(), c2.LocalAddr(), c2.RemoteAddr())
 }
 
 // copy copies all data from src to dst
@@ -315,8 +317,6 @@ func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 	n.copyWG.Done()
 }
 
-// copyBuffer is the actual implementation of Copy and CopyBuffer.
-// if buf is nil, one is allocated.
 func (n *node) copyBuffer(dst io.Writer, src io.Reader) (written int64, err error) {
 	// If the reader has a WriteTo method, use it to do the copy.
 	// Avoids an allocation and a copy.
