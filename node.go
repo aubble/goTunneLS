@@ -374,13 +374,13 @@ func (n *node) copyBuffer(dst io.Writer, src io.Reader) (written int64, err erro
 // logln logs to the global fileLogger as global
 // arguments are handled same as fmt.Println
 func (n *node) logln(v ...interface{}) {
-	l.println(append([]interface{}{"-->", n.Mode + n.Name, "-/"}, v...)...)
+	l.println(append([]interface{}{n.Mode + n.Name}, v...)...)
 }
 
 // logf logs to the global fileLogger as global
 // arguments are handled same as fmt.Printf
 func (n *node) logf(format string, v ...interface{}) {
-	l.printf("--> "+n.Mode+n.Name+" -/ "+format, v...)
+	l.printf(n.Mode+n.Name+" "+format, v...)
 }
 
 var ciphers = map[string]uint16{

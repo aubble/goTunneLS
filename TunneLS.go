@@ -25,21 +25,21 @@ type TunneLS struct {
 func (tls *TunneLS) parseFile(path string) {
 	raw, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Fatalln("--> global -/", err)
+		log.Fatalln(globalPrefix, err)
 	}
 	if err = json.Unmarshal(raw, tls); err != nil {
-		log.Fatalln("--> global -/", err)
+		log.Fatalln(globalPrefix, err)
 	}
 }
 
 // logln logs to the global fileLogger as global
 // arguements are handled same as fmt.Println
 func (tls *TunneLS) logln(v ...interface{}) {
-	l.println(append([]interface{}{"--> global -/"}, v...)...)
+	l.println(append([]interface{}{globalPrefix}, v...)...)
 }
 
 // logf logs to the global fileLogger as global
 // arguements are handled same as fmt.Printf
 func (tls *TunneLS) logf(format string, v ...interface{}) {
-	l.printf("--> global -/ "+format, v...)
+	l.printf(globalPrefix+format, v...)
 }

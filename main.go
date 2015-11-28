@@ -11,14 +11,13 @@ import (
 // logger is the global fileLogger
 var l *fileLogger
 
-const globalPrefix = "--> global -/"
+const globalPrefix = "global"
 
 // main does initialization and launches all the nodes
 // first it reads the config file into a TunneLS struct
 // next if a LogPath is provided it sets up logging
 // finally it launches all the nodes and waits for them to end
 func main() {
-	log.SetPrefix("")
 	log.SetFlags(0)
 	// read and parse config file
 	path := flag.String("c", "/usr/local/etc/TunneLS/config.json", "path to configuration file")

@@ -21,10 +21,8 @@ func newFileLogger(stderrPrefix, stdErrLogging bool, logPath string) *fileLogger
 	l = &fileLogger{stderr: stdErrLogging}
 	if stderrPrefix == false {
 		log.SetFlags(0)
-		log.SetPrefix("")
 	} else {
 		log.SetFlags(log.Ldate | log.Ltime)
-		log.SetPrefix("TunneLS: ")
 	}
 	go func() {
 		sigs := make(chan os.Signal, 1)

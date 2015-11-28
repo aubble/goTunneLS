@@ -171,14 +171,14 @@ This file is created if doesn't exist, and if deleted during execution also recr
 
 The format for logging is:
 
-	TunneLS: year/month/date hour/minute/second --> mode name -/ message
+	TunneLS: year/month/date hour/minute/second mode name message
 
 When logging is global, the mode is global and name is empty
 
 For example
 
-	TunneLS: 2015/09/03 07:04:42 --> global -/ starting client node nc
-	TunneLS: 2015/09/03 07:04:42 --> client nc -/ initializing
+	TunneLS: 2015/09/03 07:04:42 global starting client node nc
+	TunneLS: 2015/09/03 07:04:42 client nc initializing
 
 
 ####StdErrPrefixLogging
