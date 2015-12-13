@@ -57,6 +57,9 @@ type node struct {
 	// path to CRL for client-authentication
 	CRL string
 
+	// insecurely connect
+	InsecureSkipVerify bool
+
 	// tls configuration
 	tlsConfig *tls.Config
 
@@ -75,7 +78,9 @@ func (n *node) parseFields() {
 	n.Timeout *= time.Second
 	n.SessionTicketKeyRotationInterval *= time.Second
 	n.TCPKeepAliveInterval *= time.Second
-	n.tlsConfig.CipherSuites = n.parseCiphers()
+	if n.Ciphers != nil {
+		n.tlsConfig.CipherSuites = n.parseCiphers()
+	}
 }
 
 // set defaults for time fields
@@ -180,7 +185,7 @@ func (n *node) parseClientAuthType() tls.ClientAuthType {
 	return ca
 }
 
-func (n *node) initializeSessionTicketKeyRotation(){
+func (n *node) initializeSessionTicketKeyRotation() {
 	updateKey := func(key *[32]byte) {
 		if _, err := rand.Read((*key)[:]); err != nil {
 			n.logln(err)
@@ -246,6 +251,7 @@ func (n *node) client() {
 	}
 	n.tlsConfig.ServerName = host
 	n.tlsConfig.RootCAs = n.readCAIntoPool()
+	n.tlsConfig.InsecureSkipVerify = n.InsecureSkipVerify
 	n.dial = func() (net.Conn, error) {
 		d := &net.Dialer{KeepAlive: n.TCPKeepAliveInterval}
 		return tls.DialWithDialer(d, "tcp", n.Connect, n.tlsConfig)
@@ -435,7 +441,7 @@ type crlListener struct {
 }
 
 func (ln *crlListener) Accept() (net.Conn, error) {
-listen:
+	listen:
 	for {
 		c, err := ln.Listener.Accept()
 		if err != nil {

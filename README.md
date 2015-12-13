@@ -88,7 +88,8 @@ The configuration file's syntax is JSON and it consists of an array of the nodes
 				"Mode": "client",
 				"Accept": "localhost:5002",
 				"Connect": "localhost:5001",
-				"Cert": "tls/cert.pem"
+				"CA": "tls/cert.pem",
+				"InsecureSkipVerify": true
 			},
 			{
 				"Name": "nc -l",
@@ -100,14 +101,13 @@ The configuration file's syntax is JSON and it consists of an array of the nodes
 			}
 
 		],
-		"LogPath": "/dev/null",
-		"StderrPrefix": true
-		"StderrLogging": true
+		"StdErrLogging": true,
+		"StdErrPrefix": true
 	}
 
 Note: read [example](#example-1) for a hands on tutorial on using config.json and the rest of the program.
 
-First is the Nodes array which consists of structs that represent the nodes to launch followed by LogPath which points to the LogFile and StderrLogging which controls whether or not to output the prefix in the logging to stderr. The following section explains all the fields allowed in the structs representing nodes as well as an explanation of LogPath and StderrLogging.
+First is the Nodes array which consists of structs that represent the nodes to run followed by StdErrLogging and StdErrPrefix, the first of which is self explainatory. StdErrPrefix just means to add the date and time in the logging (wouldn't need this with the systemd journal).
 
 ###Fields
 
@@ -162,12 +162,10 @@ CRL -- path to certificate revocation list for client authentication (read every
 ####Optional Client Options
 Cert -- path to the RootCA for the certificate from the server. Useful when using self signed certificates (like below) that are not in the operating systems store, you must use this option to point to the RootCA in those cases or you'll get a nasty error about the certificate not being trusted.
 
+InsecureSkipVerify -- skip trust checks on the certificate (please only use this when testing)
+
 ####LogPath
-There is always logging to StdErr, no matter what. LogPath just specifies a file to also log to.
-
-The reason there is always logging to stderr is for more integrated logging when using something like systemd that manage's TunneLS. Check out StdErrPrefixLogging if you're intending on using it with systemd so you can turn off the prefix information as systemd provide's its own. If you don't want the logging on stderr, just redirect it to /dev/null.
-
-This file is created if doesn't exist, and if deleted during execution also recreated.
+Points to the file to log to.
 
 The format for logging is:
 
@@ -181,12 +179,12 @@ For example
 	TunneLS: 2015/09/03 07:04:42 client nc initializing
 
 
-####StdErrPrefixLogging
-StdErrPrefixLogging allows you to turn off/on the logging prefix. The prefix part of the logging format is:
+####StdErrPrefix
+StdErrPrefix controls whether to add the date and time to stderr logging.
 
-	TunneLS: year/month/date hour/minute/second
+	year/month/date hour/minute/second <log stuff>
 
-This lets TunneLS's logging play nice with integrated system logging such as systemd's journal which have their own timestamp information.
+This lets TunneLS's logging play nice with integrated system logging such as systemd's journal which have their own timestamp information as you can disable the logging prefix.
 
 This field only applies to the stderr logging and is off by default. LogPath's file will always have the prefix information.
 
@@ -286,7 +284,7 @@ First start a TunneLS instance with the -c flag pointing to the configuration fi
 
 	TunneLS -c config.json
 
-Leave that open and open a new terminal. Now run (make sure the BSD version of netcat is installed for the following commands, if you have the GNU version)
+Leave that open and open a new terminal. Now run (this is for the BSD version of netcat, just change the syntax a bit if you use GNU)
 
 	nc -l 5000
 
@@ -315,12 +313,12 @@ Hopefully it makes more sense now to you. nc does everything over plain text and
 
 Read the log messages from TunneLS, you can see what its doing, the tunnels its creating, the certificates its loading, errors etc. Logging is always done to stderr, but you can set a seperate logging file with the LogPath option. I've used /dev/null as LogPath to have it not log to a file. Setting it to /dev/null is the same as not having but, but I set it to demonstrate the option. Set LogPath to "logs" to have logging done to a file called logs in the same directory as config.json. Go ahead and try it!
 
-StdErrPrefixLogging set to true is needed for timestamps on the logging to stderr (stderr is connected to your terminal). By default this option is off so stderr logs don't have the logging prefix, this allows for better integration with systemd's journal and the like which usually have their own timestamp information logs. See [StdErrPrefixLogging](#stderrprefixlogging) for more information.
+StdErrPrefix set to true is needed for timestamps on the logging to stderr (stderr is connected to your terminal). By default this option is off so stderr logs don't have the logging prefix, this allows for better integration with systemd's journal and the like which usually have their own timestamp information logs. See [StdErrPrefix](#stderrprefix) for more information.
 
-Note: The client and server are configured with a default self signed certificate I've provided. When actually using this program for real purposes, please look at the [Configuring Certificates and Keys](#configuring-certificates-and-keys-1) section to generate a new key pair. Anyone who has this key.pem file can decrypt your communications (the configuring certificates section also includes a small introduction, please read it if you do not know what I mean).
+Note: The client and server are configured with a default self signed certificate I've provided (the cert is expired so insecureskipverify is needed). When actually using this program for real purposes, please look at the [Configuring Certificates and Keys](#configuring-certificates-and-keys-1) section to generate a new key pair. Anyone who has this key.pem file can decrypt your communications (the configuring certificates section also includes a small introduction, please read it if you do not know what I mean).
 
 ##ITS ALIVE!
-<img src="http://i.imgur.com/1s2v4l6.png">
+<img src="">
 
 
 ## Contribute
