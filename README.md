@@ -79,7 +79,7 @@ Basically the server does the exact opposite. Listens on it's Accept address for
 
 ###config.json
 
-The configuration file's syntax is JSON and it consists of an array of the nodes structs each with the following fields, and then the path to the logFile. A neat simple example file, config.json, is included.
+The configuration file's syntax is JSON and it consists of an array of the nodes structs each with their own fields. Then its followed by StdErrLogging/StdErrPrefix/LogPath all of which are explained further below. Here is the example file included.
 
 	{
 		"Nodes": [
