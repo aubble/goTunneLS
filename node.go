@@ -121,7 +121,6 @@ func (n *node) run(wg *sync.WaitGroup) {
 	n.setDefaults()
 	n.parseFields()
 	if n.Cert != "" {
-		n.logf("loading cert %s and key %s", n.Cert, n.Key)
 		var err error
 		n.tlsConfig.Certificates = make([]tls.Certificate, 1)
 		n.tlsConfig.Certificates[0], err = tls.LoadX509KeyPair(n.Cert, n.Key)
@@ -146,7 +145,6 @@ func (n *node) readCAIntoPool() (pool *x509.CertPool) {
 			panic(err)
 		}
 		pool = x509.NewCertPool()
-		n.logf("adding %s to CA pool", n.CA)
 		ok := pool.AppendCertsFromPEM(ca)
 		if ok == false {
 			panic("could not append cert to RootCAs pool")
@@ -192,7 +190,6 @@ func (n *node) initializeSessionTicketKeyRotation() {
 			n.logln("cannot create new session ticket key")
 		}
 	}
-	n.logln("initializing session ticket key rotation")
 	keys := make([][32]byte, 3)
 	updateKey(&keys[0])
 	updateKey(&keys[1])
