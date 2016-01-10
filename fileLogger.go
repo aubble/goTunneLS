@@ -27,7 +27,8 @@ func newFileLogger(stderrPrefix, stdErrLogging bool, logPath string) *fileLogger
 	go func() {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-		l.fatalf("%s got signal %s; terminating", globalPrefix, <-sigs)
+		l.printf("%s got signal %s; terminating", globalPrefix, <-sigs)
+		os.Exit(0)
 	}()
 	if logPath != "" {
 		logFile, err := os.OpenFile(logPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
