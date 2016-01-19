@@ -222,7 +222,7 @@ func (n *node) server() {
 		if err != nil {
 			return nil, err
 		}
-		tlsLn, err = tls.NewListener(tcpKeepAliveListener{ln.(*net.TCPListener), n.TCPKeepAliveInterval}, n.tlsConfig), err
+		tlsLn = tls.NewListener(tcpKeepAliveListener{ln.(*net.TCPListener), n.TCPKeepAliveInterval}, n.tlsConfig)
 		if n.CRL != "" {
 			tlsLn = &crlListener{tlsLn, n}
 		}
