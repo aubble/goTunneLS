@@ -48,17 +48,11 @@ type node struct {
 	// ciphers to use
 	Ciphers []string
 
-	// controls logging the actual writing/reading of data
-	LogData bool
-
 	// type of client authentication to use
 	ClientAuth string
 
 	// path to CRL for client-authentication
 	CRL string
-
-	// insecurely connect
-	InsecureSkipVerify bool
 
 	// tls configuration
 	tlsConfig *tls.Config
@@ -71,6 +65,12 @@ type node struct {
 
 	// dials the Connect address
 	dial func() (net.Conn, error)
+
+	// controls logging the actual writing/reading of data
+	LogData bool
+
+	// insecurely connect
+	InsecureSkipVerify bool
 }
 
 func (n *node) parseFields() {
