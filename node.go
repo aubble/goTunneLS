@@ -27,6 +27,11 @@ type node struct {
 	// dial address
 	Connect string
 
+	// Unencrypted connections can be made by the server side
+	// to a UNIX domain socket at ConnectPath if this value is
+	// provided.
+	ConnectPath string
+
 	// path to ca
 	CA string
 
@@ -228,9 +233,16 @@ func (n *node) server() {
 		}
 		return
 	}
-	n.dial = func() (c net.Conn, err error) {
-		d := &net.Dialer{KeepAlive: n.TCPKeepAliveInterval}
-		return d.Dial("tcp", n.Connect)
+
+	if n.ConnectPath != "" {
+		n.dial = func() (c net.Conn, err error) {
+			return net.Dial("unix", n.ConnectPath)
+		}
+	} else {
+		n.dial = func() (c net.Conn, err error) {
+			d := &net.Dialer{KeepAlive: n.TCPKeepAliveInterval}
+			return d.Dial("tcp", n.Connect)
+		}
 	}
 	n.listenAndServe()
 }
