@@ -205,9 +205,9 @@ func (n *node) initializeSessionTicketKeyRotation() {
 			n.logf("session ticket key rotation sleeping for %vs", float64(n.SessionTicketKeyRotationInterval/time.Second))
 			time.Sleep(n.SessionTicketKeyRotationInterval)
 			n.logln("updating session ticket rotation keys")
-			keys[0] = keys[1]
-			keys[1] = keys[2]
-			updateKey(&keys[2])
+			keys[1] = keys[0]
+			keys[2] = keys[1]
+			updateKey(&keys[0])
 		}
 	}()
 }
