@@ -151,7 +151,7 @@ func (n *node) readCAIntoPool() (pool *x509.CertPool) {
 		}
 		pool = x509.NewCertPool()
 		ok := pool.AppendCertsFromPEM(ca)
-		if ok == false {
+		if !ok {
 			panic("could not append cert to RootCAs pool")
 		}
 	}
