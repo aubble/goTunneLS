@@ -1,6 +1,6 @@
 # TunneLS
 
-## THIS REPOSITORY IS DEPRECATED, I USE [tlsmuxd](https://github.com/nhooyr/tlsmuxd] and [tlswrapd](https://github.com/nhooyr/tlswrapd) NOW
+## THIS REPOSITORY IS DEPRECATED, I USE https://github.com/nhooyr/tlsmuxd and https://github.com/nhooyr/tlswrapd NOW
 
 ## Description
 
