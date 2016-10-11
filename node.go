@@ -62,9 +62,6 @@ type node struct {
 	// tls configuration
 	tlsConfig *tls.Config
 
-	// wg for the copy goroutines, to write logs in sync after they exit
-	copyWG sync.WaitGroup
-
 	// listen on Accept address
 	listen func() (net.Listener, error)
 
@@ -322,17 +319,18 @@ func (n *node) dialAndTunnel(c1 net.Conn) {
 // creates the tunnel between c1 and c2
 func (n *node) tunnel(c1, c2 net.Conn) {
 	n.logf("beginning tunnel from %s to %s then %s to %s", c1.RemoteAddr(), c1.LocalAddr(), c2.LocalAddr(), c2.RemoteAddr())
-	n.copyWG.Add(2)
-	go n.copy(c1, c2)
-	go n.copy(c2, c1)
-	n.copyWG.Wait()
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go n.copy(c1, c2, wg)
+	go n.copy(c2, c1, wg)
+	wg.Wait()
 	n.logf("closed tunnel from %s to %s then %s to %s", c1.RemoteAddr(), c1.LocalAddr(), c2.LocalAddr(), c2.RemoteAddr())
 }
 
 // copy copies all data from src to dst
 // then calls Done() on the copyWG to allow
 // the calling routine to stop waiting followed by closing dst
-func (n *node) copy(dst io.WriteCloser, src io.Reader) {
+func (n *node) copy(dst io.WriteCloser, src io.Reader, wg sync.WaitGroup) {
 	defer dst.Close()
 	var f func(io.Writer, io.Reader) (int64, error)
 	if n.LogData {
@@ -343,7 +341,7 @@ func (n *node) copy(dst io.WriteCloser, src io.Reader) {
 	if _, err := f(dst, src); err != nil {
 		n.logln(err)
 	}
-	n.copyWG.Done()
+	wg.Done()
 }
 
 func (n *node) copyBuffer(dst io.Writer, src io.Reader) (written int64, err error) {
